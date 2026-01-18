@@ -24,7 +24,8 @@ connectDB();
 app.use(cors({
     origin: [
         'http://localhost:5173', // Local development
-        'https://algo-flow-sarthak-kanois-projects.vercel.app' // Production
+        'https://algo-flow-sarthak-kanois-projects.vercel.app', // Production (project name)
+        'https://algo-flow-khaki.vercel.app' // Production (actual domain)
     ],
     credentials: true
 }));
