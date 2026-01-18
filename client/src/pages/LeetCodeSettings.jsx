@@ -332,7 +332,7 @@ const LeetCodeSettings = () => {
                     GitHub Auto-Sync (Recommended!)
                 </h2>
                 <p className="text-white/70 mb-4">
-                    Automatically import ALL 268 problems from your GitHub repository with your actual code!
+                    Automatically import problems from your GitHub repository with your actual code!
                     This bypasses LeetCode's API limitations.
                 </p>
 
@@ -358,7 +358,7 @@ const LeetCodeSettings = () => {
                     ) : (
                         <>
                             <Github size={20} />
-                            Import All 268 Problems from GitHub
+                            Import from GitHub
                         </>
                     )}
                 </button>

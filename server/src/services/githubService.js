@@ -10,9 +10,13 @@ class GitHubService {
         this.baseUrl = `https://api.github.com/repos/${username}/${repo}`;
         this.headers = {
             'Accept': 'application/vnd.github.v3+json',
-            'User-Agent': 'DSA-Tracker-App',
-            'Authorization': `token ${GITHUB_TOKEN}`
+            'User-Agent': 'DSA-Tracker-App'
         };
+
+        // Only add Authorization header if token exists
+        if (GITHUB_TOKEN) {
+            this.headers['Authorization'] = `token ${GITHUB_TOKEN}`;
+        }
     }
 
     /**
