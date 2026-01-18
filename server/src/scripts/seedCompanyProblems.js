@@ -128,9 +128,8 @@ async function seedDatabase() {
         // Check if already seeded
         const existingCount = await CompanyProblem.countDocuments();
         if (existingCount > 0) {
-            console.log(`ℹ️  Database already has ${existingCount} problems. Skipping seed.`);
-            console.log('   To re-seed, drop the company_problems collection first.');
-            process.exit(0);
+            console.log(`⚠️  Dropping existing ${existingCount} problems for fresh import...`);
+            await CompanyProblem.deleteMany({});
         }
 
         console.log('\n🌱 Starting comprehensive company problems import...\n');
