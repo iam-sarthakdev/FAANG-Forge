@@ -23,11 +23,31 @@ connectDB();
 
 // Middleware
 app.use(cors({
-    origin: [
-        'http://localhost:5173', // Local development
-        'https://algo-flow-sarthak-kanois-projects.vercel.app', // Production (project name)
-        'https://algo-flow-khaki.vercel.app' // Production (actual domain)
-    ],
+    origin: function (origin, callback) {
+        // Allow requests with no origin (mobile apps, Postman, etc.)
+        if (!origin) return callback(null, true);
+
+        const allowedOrigins = [
+            'http://localhost:5173',
+            'http://localhost:5000',
+            /^https:\/\/.*\.vercel\.app$/  // All Vercel domains
+        ];
+
+        // Check if origin matches any of the allowed patterns
+        const isAllowed = allowedOrigins.some(pattern => {
+            if (pattern instanceof RegExp) {
+                return pattern.test(origin);
+            }
+            return pattern === origin;
+        });
+
+        if (isAllowed) {
+            callback(null, true);
+        } else {
+            console.log('CORS blocked origin:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 app.use(express.json());
