@@ -24,33 +24,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// Middleware - Allow all origins for production
 app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests with no origin (mobile apps, Postman, etc.)
-        if (!origin) return callback(null, true);
-
-        const allowedOrigins = [
-            'http://localhost:5173',
-            'http://localhost:5000',
-            /^https:\/\/.*\.vercel\.app$/  // All Vercel domains
-        ];
-
-        // Check if origin matches any of the allowed patterns
-        const isAllowed = allowedOrigins.some(pattern => {
-            if (pattern instanceof RegExp) {
-                return pattern.test(origin);
-            }
-            return pattern === origin;
-        });
-
-        if (isAllowed) {
-            callback(null, true);
-        } else {
-            console.log('CORS blocked origin:', origin);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: true,
     credentials: true
 }));
 app.use(express.json());
