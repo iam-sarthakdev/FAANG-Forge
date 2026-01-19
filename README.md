@@ -1,8 +1,8 @@
-# 🚀 AlgoFlow - FAANG Interview Prep Platform
+# 🚀 FAANG Forge - Premium Interview Prep Platform
 
 <div align="center">
 
-![AlgoFlow Banner](https://img.shields.io/badge/MERN-Stack-61DAFB?style=for-the-badge&logo=react&logoColor=white)
+![MERN Stack](https://img.shields.io/badge/MERN-Stack-61DAFB?style=for-the-badge&logo=react&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
@@ -10,7 +10,7 @@
 
 **A premium, full-stack DSA revision platform with spaced repetition, pattern recognition, and comprehensive Low-Level Design learning**
 
-[Live Demo](https://algoflow.vercel.app) • [Report Bug](https://github.com/iam-sarthakdev/AlgoFlow/issues) • [Request Feature](https://github.com/iam-sarthakdev/AlgoFlow/issues)
+[Live Demo](https://algo-flow-khaki.vercel.app/) • [Report Bug](https://github.com/iam-sarthakdev/AlgoFlow/issues) • [Request Feature](https://github.com/iam-sarthakdev/AlgoFlow/issues)
 
 </div>
 
@@ -35,14 +35,14 @@
 
 ## 🎯 Overview
 
-**AlgoFlow** is an intelligent DSA interview preparation platform designed to help developers master coding interviews through:
+**FAANG Forge** is an intelligent DSA interview preparation platform designed to help developers master coding interviews through:
 - **Spaced Repetition**: Scientifically-proven scheduling algorithm for long-term retention
 - **Pattern Recognition**: Automatic categorization of 14+ common DSA patterns
 - **Company-Specific Practice**: 2892+ problems from 20+ FAANG & top-tier companies
 - **Comprehensive LLD**: In-depth Low-Level Design content with real-world case studies
 - **Smart Analytics**: Visual insights into your preparation journey
 
-Built with a premium glassmorphic UI and enterprise-grade architecture, AlgoFlow transforms how developers prepare for technical interviews.
+Built with a premium glassmorphic UI and enterprise-grade architecture, FAANG Forge transforms how developers prepare for technical interviews.
 
 ---
 
@@ -113,7 +113,7 @@ Built with a premium glassmorphic UI and enterprise-grade architecture, AlgoFlow
 | Service | Purpose |
 |---------|---------|
 | **Vercel** | Frontend hosting |
-| **Railway** | Backend hosting |
+| **Render** | Backend hosting |
 | **MongoDB Atlas** | Cloud database |
 | **Git & GitHub** | Version control |
 
@@ -172,7 +172,7 @@ graph TB
 ## 📁 Project Structure
 
 ```
-AlgoFlow/
+FAANG-Forge/
 ├── client/                      # Frontend React application
 │   ├── public/
 │   │   └── system-design-data/  # LLD markdown files
@@ -426,11 +426,11 @@ AlgoFlow/
 1. Push code to GitHub
 2. Import repository in Vercel
 3. Set environment variables:
-   - `VITE_API_URL=https://your-backend-url.railway.app`
+   - `VITE_API_URL=https://your-backend-url.onrender.com`
 4. Deploy
 
-### **Backend (Railway)**
-1. Create new project in Railway
+### **Backend (Render)**
+1. Create new Web Service in Render
 2. Connect GitHub repository
 3. Add MongoDB Atlas connection string
 4. Set environment variables
