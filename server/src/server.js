@@ -79,15 +79,17 @@ const startServer = async () => {
         // Connect to MongoDB
         await connectDB();
 
-        // Auto-seed company problems if empty
+        // Auto-seed company problems if empty or incomplete
         try {
             const count = await CompanyProblem.countDocuments();
-            if (count === 0) {
-                console.log('🌱 Database empty. Starting auto-seed for company problems...');
+            const shouldSeed = count < 500 || process.env.FORCE_SEED === 'true';
+
+            if (shouldSeed) {
+                console.log(`🌱 Database invalid (count: ${count}). Starting full auto-seed...`);
                 await seedCompanyProblems();
                 console.log('✅ Auto-seed completed.');
             } else {
-                console.log(`📦 Database already seeded with ${count} company problems.`);
+                console.log(`📦 Database verified: ${count} company problems present.`);
             }
         } catch (seedError) {
             console.error('⚠️ Auto-seed failed (continuing server start):', seedError);
