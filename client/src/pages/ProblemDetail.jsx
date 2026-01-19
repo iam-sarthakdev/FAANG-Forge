@@ -289,23 +289,23 @@ const ProblemDetail = () => {
     const diffOptions = DIFFICULTIES.map(d => ({ value: d, label: d }));
 
     return (
-        <div className="min-h-screen pb-20 px-6 max-w-7xl mx-auto pt-6">
+        <div className="min-h-screen pb-20 px-4 md:px-6 max-w-7xl mx-auto pt-4 md:pt-6">
             {/* Top Navigation Bar */}
-            <header className="flex items-center justify-between mb-8">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-8">
                 <button
                     onClick={() => {
                         // If there are unsaved changes (technically we don't track dirty state perfectly, 
                         // but we can just navigate back. User should click Save first if they want to be sure.)
                         navigate('/problems');
                     }}
-                    className="flex items-center text-white/60 hover:text-white transition-colors"
+                    className="flex items-center text-white/60 hover:text-white transition-colors self-start"
                 >
                     <ArrowLeft size={20} className="mr-2" /> Back
                 </button>
 
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-3 md:gap-4 w-full md:w-auto">
                     {/* Save Status Indicator */}
-                    <div className="text-sm font-medium mr-2">
+                    <div className="text-sm font-medium mr-2 hidden sm:block">
                         {saveStatus === 'saving' && <span className="text-yellow-500 animate-pulse">Saving...</span>}
                         {saveStatus === 'saved' && <span className="text-green-500 flex items-center"><Check size={14} className="mr-1" /> All changes saved</span>}
                         {saveStatus === 'revised' && <span className="text-blue-500 flex items-center">🎉 Revision Recorded!</span>}
@@ -313,39 +313,39 @@ const ProblemDetail = () => {
                     </div>
 
                     {id !== 'new' && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
                             {/* Manual Save Button */}
                             <button
                                 onClick={handleSave} // Reuse the save logic, it does exactly what we want
                                 disabled={saveStatus === 'saving'}
-                                className="bg-primary hover:bg-primary/80 text-white font-medium px-5 py-2 rounded-lg flex items-center transition-all shadow-lg shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-1 md:flex-none justify-center bg-primary hover:bg-primary/80 text-white font-medium px-4 py-2 rounded-lg flex items-center transition-all shadow-lg shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                             >
                                 <Check size={16} className="mr-2" />
-                                Save Changes
+                                Save
                             </button>
 
                             {/* Mark as Solved Toggle */}
                             <button
                                 onClick={() => setFormData({ ...formData, isSolved: !formData.isSolved })}
-                                className={`px-4 py-2 rounded-lg flex items-center transition-all border ${formData.isSolved
+                                className={`flex-1 md:flex-none justify-center px-4 py-2 rounded-lg flex items-center transition-all border whitespace-nowrap ${formData.isSolved
                                     ? 'bg-green-500/20 text-green-400 border-green-500/50'
                                     : 'bg-white/5 text-white/60 border-white/20 hover:border-white/40'
                                     }`}
                             >
                                 <Check size={16} className="mr-2" />
-                                {formData.isSolved ? 'Solved' : 'Mark Solved'}
+                                {formData.isSolved ? 'Solved' : 'Solve'}
                             </button>
 
                             <button
                                 onClick={handleMarkRevised}
-                                className="bg-white/5 hover:bg-white/10 text-white border border-white/20 px-4 py-2 rounded-lg flex items-center transition-all"
+                                className="flex-1 md:flex-none justify-center bg-white/5 hover:bg-white/10 text-white border border-white/20 px-4 py-2 rounded-lg flex items-center transition-all whitespace-nowrap"
                             >
                                 <RefreshCw size={16} className="mr-2" />
-                                Mark as Revised
+                                Mark Revised
                             </button>
                             <button
                                 onClick={handleDelete}
-                                className="p-2 text-white/40 hover:text-red-400 transition-colors"
+                                className="p-2 text-white/40 hover:text-red-400 transition-colors ml-auto md:ml-0"
                             >
                                 <Trash2 size={18} />
                             </button>
