@@ -16,7 +16,16 @@ const COMPANY_REPO_PATH = path.join(__dirname, '../../../temp_company_repo');
 // Connect to MongoDB
 const connectDB = async () => {
     try {
-        await mongoose.connect(process.env.MONGO_URI || process.env.MONGODB_URI);
+        const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
+
+        if (!mongoUri) {
+            console.warn('⚠️  MONGODB_URI not found in environment variables.');
+            console.warn('   Skipping seed script to allow deployment to proceed.');
+            console.warn('   Please set MONGODB_URI in your Railway/Vercel project settings if you want to seed data.');
+            process.exit(0); // Exit successfully to prevent build failure
+        }
+
+        await mongoose.connect(mongoUri);
         console.log('✅ MongoDB connected');
     } catch (error) {
         console.error('❌ MongoDB connection error:', error);
