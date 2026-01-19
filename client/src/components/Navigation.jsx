@@ -138,10 +138,14 @@ const Navigation = () => {
                                     <User size={16} />
                                     Profile Settings
                                 </button>
-                                <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:text-white hover:bg-white/10 transition-colors text-left">
+                                <Link
+                                    to="/leetcode-settings"
+                                    onClick={() => setIsProfileOpen(false)}
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:text-white hover:bg-white/10 transition-colors text-left"
+                                >
                                     <Settings size={16} />
-                                    Preferences
-                                </button>
+                                    Connect LeetCode
+                                </Link>
 
                                 <div className="h-px bg-white/5 my-1" />
 
