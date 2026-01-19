@@ -10,21 +10,30 @@ class LeetCodeService {
 
     async makeGraphQLRequest(query, variables = {}) {
         try {
+            const headers = {
+                'Content-Type': 'application/json',
+                'Referer': 'https://leetcode.com',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            };
+
+            // Only attach auth headers if valid credentials exist
+            if (this.sessionCookie && this.csrfToken) {
+                headers['Cookie'] = `LEETCODE_SESSION=${this.sessionCookie}; csrftoken=${this.csrfToken}`;
+                headers['x-csrftoken'] = this.csrfToken;
+            }
+
             const response = await axios.post(
                 LEETCODE_GRAPHQL_URL,
                 { query, variables },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Cookie': `LEETCODE_SESSION=${this.sessionCookie}; csrftoken=${this.csrfToken}`,
-                        'x-csrftoken': this.csrfToken,
-                        'Referer': 'https://leetcode.com'
-                    }
-                }
+                { headers }
             );
             return response.data;
         } catch (error) {
             console.error('LeetCode GraphQL Error:', error.response?.data || error.message);
+
+            // If we failed with 401/403 and had credentials, maybe retry without? 
+            // For now, usually User-Agent fix is enough. 
+            // We throw a generic error to be caught by controller.
             throw new Error('Failed to fetch from LeetCode');
         }
     }
