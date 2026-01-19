@@ -78,7 +78,7 @@ const ProblemDetail = () => {
 
     // Auto-save logic
     useEffect(() => {
-        if (id !== 'new' && !submitting) {
+        if (id !== 'new' && !submitting && !loading && formData.title) {
             const timeoutId = setTimeout(() => {
                 handleSave();
             }, 2000);
