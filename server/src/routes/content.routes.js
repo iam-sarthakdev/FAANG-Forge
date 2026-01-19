@@ -6,13 +6,11 @@ import {
     getSystemDesignContent,
     getFileContent
 } from '../controllers/contentController.js';
-import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Notes: We can choose to make these public or protected. 
-// Since it fetches public GitHub data, it could be public, but usually it's behind auth.
-router.use(authenticate);
+// Content routes are PUBLIC since they fetch from public GitHub repos and local static files
+// No authentication required
 
 router.get('/fundamentals/:topic?', getFundamentalsContent);
 router.get('/behavioral', getBehavioralContent);
