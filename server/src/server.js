@@ -14,13 +14,15 @@ import contentRoutes from './routes/content.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { scheduleReminderJob } from './jobs/reminderJob.js';
 
+import { seedCompanyProblems } from './scripts/seedCompanyProblemsLocal.js';
+import CompanyProblem from './models/CompanyProblem.js';
+
+// ... imports
+
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-// Connect to MongoDB
-connectDB();
 
 // Middleware
 app.use(cors({
@@ -72,21 +74,47 @@ app.get('/health', (req, res) => {
 // Error handler (must be last)
 app.use(errorHandler);
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`\n🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📊 API endpoints:`);
-    console.log(`   - POST   /api/problems`);
-    console.log(`   - GET    /api/problems`);
-    console.log(`   - GET    /api/problems/:id`);
-    console.log(`   - PATCH  /api/problems/:id`);
-    console.log(`   - DELETE /api/problems/:id`);
-    console.log(`   - POST   /api/problems/:id/revisions`);
-    console.log(`   - GET    /api/dashboard/reminders`);
-    console.log(`   - GET    /api/analytics\n`);
+const startServer = async () => {
+    try {
+        // Connect to MongoDB
+        await connectDB();
 
-    // Schedule reminder cron job
-    scheduleReminderJob();
-});
+        // Auto-seed company problems if empty
+        try {
+            const count = await CompanyProblem.countDocuments();
+            if (count === 0) {
+                console.log('🌱 Database empty. Starting auto-seed for company problems...');
+                await seedCompanyProblems();
+                console.log('✅ Auto-seed completed.');
+            } else {
+                console.log(`📦 Database already seeded with ${count} company problems.`);
+            }
+        } catch (seedError) {
+            console.error('⚠️ Auto-seed failed (continuing server start):', seedError);
+        }
+
+        // Start server
+        app.listen(PORT, () => {
+            console.log(`\n🚀 Server running on http://localhost:${PORT}`);
+            console.log(`📊 API endpoints:`);
+            console.log(`   - POST   /api/problems`);
+            console.log(`   - GET    /api/problems`);
+            console.log(`   - GET    /api/problems/:id`);
+            console.log(`   - PATCH  /api/problems/:id`);
+            console.log(`   - DELETE /api/problems/:id`);
+            console.log(`   - POST   /api/problems/:id/revisions`);
+            console.log(`   - GET    /api/dashboard/reminders`);
+            console.log(`   - GET    /api/analytics\n`);
+
+            // Schedule reminder cron job
+            scheduleReminderJob();
+        });
+    } catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    }
+};
+
+startServer();
 
 export default app;

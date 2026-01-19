@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
-const COMPANY_REPO_PATH = path.join(__dirname, '../../../temp_company_repo');
+const COMPANY_REPO_PATH = path.join(__dirname, '../data/companies');
 
 // Connect to MongoDB
 const connectDB = async () => {
@@ -85,6 +85,15 @@ const parseCSV = (filePath) => {
 const seedCompanyProblems = async () => {
     try {
         console.log('🚀 Starting company problems seeding from local CSV files...\n');
+        console.log('📍 Current __dirname:', __dirname);
+        console.log('📍 Target COMPANY_REPO_PATH:', COMPANY_REPO_PATH);
+
+        // Verify directory exists
+        if (!fs.existsSync(COMPANY_REPO_PATH)) {
+            console.error(`❌ Data directory not found at: ${COMPANY_REPO_PATH}`);
+            console.error('Available directories in parent:', fs.readdirSync(path.join(__dirname, '../data')));
+            return;
+        }
 
         // Clear existing data
         const existingCount = await CompanyProblem.countDocuments();
@@ -97,7 +106,11 @@ const seedCompanyProblems = async () => {
             .filter(dirent => dirent.isDirectory())
             .map(dirent => dirent.name);
 
-        console.log(`📁 Found ${companies.length} company directories\n`);
+        console.log(`📁 Found ${companies.length} company directories`);
+        if (companies.length === 0) {
+            console.log('Check if CSV files are correctly placed in server/src/data/companies/');
+        }
+        console.log('\n');
 
         const problemsMap = new Map(); // Use title+difficulty as key to avoid duplicates
 
@@ -205,17 +218,20 @@ const seedCompanyProblems = async () => {
     }
 };
 
-// Run the seeder
-const run = async () => {
-    try {
-        await connectDB();
-        await seedCompanyProblems();
-        console.log('\n✨ All done! You can now access companies from the Companies page.');
-        process.exit(0);
-    } catch (error) {
-        console.error('Fatal error:', error);
-        process.exit(1);
-    }
-};
+// Run the seeder if executed directly
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    const run = async () => {
+        try {
+            await connectDB();
+            await seedCompanyProblems();
+            console.log('\n✨ All done! You can now access companies from the Companies page.');
+            process.exit(0);
+        } catch (error) {
+            console.error('Fatal error:', error);
+            process.exit(1);
+        }
+    };
+    run();
+}
 
-run();
+export { seedCompanyProblems };
