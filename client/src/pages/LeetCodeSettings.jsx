@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Settings, Link as LinkIcon, RefreshCw, Trash2, CheckCircle, Upload, Loader2, Key, AlertCircle, Github } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 
 const LeetCodeSettings = () => {
     const [credentials, setCredentials] = useState({
@@ -22,16 +22,13 @@ const LeetCodeSettings = () => {
     const [githubSyncing, setGithubSyncing] = useState(false);
     const [githubSyncResult, setGithubSyncResult] = useState(null);
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     useEffect(() => {
         fetchSyncStatus();
     }, []);
 
     const fetchSyncStatus = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/leetcode/status', {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            });
+            const response = await api.get('/leetcode/status');
             setSyncStatus(response.data);
             if (response.data.configured) {
                 setCredentials(prev => ({ ...prev, leetcode_username: response.data.username }));
@@ -47,10 +44,9 @@ const LeetCodeSettings = () => {
         setMessage({ type: '', text: '' });
 
         try {
-            await axios.post(
-                'http://localhost:5000/api/leetcode/credentials',
-                credentials,
-                { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+            await api.post(
+                '/leetcode/credentials',
+                credentials
             );
 
             setMessage({ type: 'success', text: 'Credentials saved successfully!' });
@@ -67,10 +63,9 @@ const LeetCodeSettings = () => {
         setMessage({ type: '', text: '' });
 
         try {
-            const response = await axios.post(
-                'http://localhost:5000/api/leetcode/sync',
-                {},
-                { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+            const response = await api.post(
+                '/leetcode/sync',
+                {}
             );
 
             setMessage({
@@ -104,11 +99,9 @@ const LeetCodeSettings = () => {
                 return;
             }
 
-            const token = localStorage.getItem('token');
-            const response = await axios.post(
-                `${API_URL}/leetcode/bulk-import`,
-                { urls },
-                { headers: { Authorization: `Bearer ${token}` } }
+            const response = await api.post(
+                '/leetcode/bulk-import',
+                { urls }
             );
 
             setBulkImportResult({
@@ -134,14 +127,12 @@ const LeetCodeSettings = () => {
             setGithubSyncing(true);
             setGithubSyncResult(null);
 
-            const token = localStorage.getItem('token');
-            const response = await axios.post(
-                `${API_URL}/leetcode/sync-github`,
+            const response = await api.post(
+                '/leetcode/sync-github',
                 {
                     githubUsername: 'iam-sarthakdev',
                     githubRepo: 'LeetCode'
-                },
-                { headers: { Authorization: `Bearer ${token}` } }
+                }
             );
 
             setGithubSyncResult({
