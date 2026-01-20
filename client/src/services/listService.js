@@ -32,12 +32,20 @@ const toggleProblemCompletion = async (listId, sectionId, problemId) => {
     return response.data;
 };
 
+const createSection = async (listId, title) => {
+    const response = await axios.post(`${API_URL}/lists/${listId}/sections`, { title }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+    return response.data;
+};
+
 const listService = {
     getLists,
     getListByName,
     getListByName,
     addProblemToList,
-    toggleProblemCompletion
+    toggleProblemCompletion,
+    createSection
 };
 
 export default listService;

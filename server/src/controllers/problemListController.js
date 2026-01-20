@@ -41,6 +41,28 @@ export const addProblemToList = async (req, res) => {
     }
 };
 
+export const createSection = async (req, res) => {
+    const { listId } = req.params;
+    const { title } = req.body;
+
+    try {
+        const list = await ProblemList.findById(listId);
+        if (!list) return res.status(404).json({ message: 'List not found' });
+
+        // Check if section already exists
+        if (list.sections.some(s => s.title === title)) {
+            return res.status(400).json({ message: 'Section with this title already exists' });
+        }
+
+        list.sections.push({ title, problems: [] });
+        await list.save();
+
+        res.status(200).json(list);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 export const toggleProblemCompletion = async (req, res) => {
     const { listId, sectionId, problemId } = req.params;
 
