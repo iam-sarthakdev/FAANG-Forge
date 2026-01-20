@@ -126,9 +126,18 @@ const ProblemDetail = () => {
         if (!formData.title) return;
         try {
             setSaveStatus('saving');
-            await updateProblem(id, formData);
-            setSaveStatus('saved');
-            setTimeout(() => setSaveStatus(''), 3000);
+            if (id === 'new') {
+                const res = await createProblem(formData);
+                setSaveStatus('saved');
+                setTimeout(() => {
+                    // Assuming the response contains the new problem or we just go back
+                    navigate('/problems');
+                }, 1000);
+            } else {
+                await updateProblem(id, formData);
+                setSaveStatus('saved');
+                setTimeout(() => setSaveStatus(''), 3000);
+            }
         } catch (err) {
             console.error('Save failed:', err);
             setSaveStatus('error');
@@ -312,45 +321,48 @@ const ProblemDetail = () => {
                         {saveStatus === 'error' && <span className="text-red-500 flex items-center">Error saving</span>}
                     </div>
 
-                    {id !== 'new' && (
-                        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                            {/* Manual Save Button */}
-                            <button
-                                onClick={handleSave} // Reuse the save logic, it does exactly what we want
-                                disabled={saveStatus === 'saving'}
-                                className="flex-1 md:flex-none justify-center bg-primary hover:bg-primary/80 text-white font-medium px-4 py-2 rounded-lg flex items-center transition-all shadow-lg shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                            >
-                                <Check size={16} className="mr-2" />
-                                Save
-                            </button>
+                    {/* Toggle Buttons based on ID */}
+                    <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                        {/* Save/Create Button - ALWAYS VISIBLE */}
+                        <button
+                            onClick={handleSave}
+                            disabled={saveStatus === 'saving'}
+                            className="flex-1 md:flex-none justify-center bg-primary hover:bg-primary/80 text-white font-medium px-4 py-2 rounded-lg flex items-center transition-all shadow-lg shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                        >
+                            <Check size={16} className="mr-2" />
+                            {id === 'new' ? 'Create Problem' : 'Save Changes'}
+                        </button>
 
-                            {/* Mark as Solved Toggle */}
-                            <button
-                                onClick={() => setFormData({ ...formData, isSolved: !formData.isSolved })}
-                                className={`flex-1 md:flex-none justify-center px-4 py-2 rounded-lg flex items-center transition-all border whitespace-nowrap ${formData.isSolved
-                                    ? 'bg-green-500/20 text-green-400 border-green-500/50'
-                                    : 'bg-white/5 text-white/60 border-white/20 hover:border-white/40'
-                                    }`}
-                            >
-                                <Check size={16} className="mr-2" />
-                                {formData.isSolved ? 'Solved' : 'Solve'}
-                            </button>
+                        {/* Existing Problem Actions (Only show if NOT new) */}
+                        {id !== 'new' && (
+                            <>
+                                <button
+                                    onClick={() => setFormData({ ...formData, isSolved: !formData.isSolved })}
+                                    className={`flex-1 md:flex-none justify-center px-4 py-2 rounded-lg flex items-center transition-all border whitespace-nowrap ${formData.isSolved
+                                        ? 'bg-green-500/20 text-green-400 border-green-500/50'
+                                        : 'bg-white/5 text-white/60 border-white/20 hover:border-white/40'
+                                        }`}
+                                >
+                                    <Check size={16} className="mr-2" />
+                                    {formData.isSolved ? 'Solved' : 'Solve'}
+                                </button>
 
-                            <button
-                                onClick={handleMarkRevised}
-                                className="flex-1 md:flex-none justify-center bg-white/5 hover:bg-white/10 text-white border border-white/20 px-4 py-2 rounded-lg flex items-center transition-all whitespace-nowrap"
-                            >
-                                <RefreshCw size={16} className="mr-2" />
-                                Mark Revised
-                            </button>
-                            <button
-                                onClick={handleDelete}
-                                className="p-2 text-white/40 hover:text-red-400 transition-colors ml-auto md:ml-0"
-                            >
-                                <Trash2 size={18} />
-                            </button>
-                        </div>
-                    )}
+                                <button
+                                    onClick={handleMarkRevised}
+                                    className="flex-1 md:flex-none justify-center bg-white/5 hover:bg-white/10 text-white border border-white/20 px-4 py-2 rounded-lg flex items-center transition-all whitespace-nowrap"
+                                >
+                                    <RefreshCw size={16} className="mr-2" />
+                                    Mark Revised
+                                </button>
+                                <button
+                                    onClick={handleDelete}
+                                    className="p-2 text-white/40 hover:text-red-400 transition-colors ml-auto md:ml-0"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            </>
+                        )}
+                    </div>
                 </div>
             </header>
 
