@@ -39,9 +39,10 @@ const createSection = async (listId, title) => {
     return response.data;
 };
 
-const deleteSection = async (listId, sectionId) => {
+const deleteSection = async (listId, sectionId, password) => {
     const response = await axios.delete(`${API_URL}/lists/${listId}/sections/${sectionId}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        data: { password }
     });
     return response.data;
 };
@@ -61,7 +62,19 @@ const listService = {
     toggleProblemCompletion,
     createSection,
     deleteSection,
-    deleteProblem
+    deleteProblem,
+    reorderSection: async (listId, sourceIndex, destinationIndex) => {
+        const response = await axios.put(`${API_URL}/lists/${listId}/reorder-section`, { sourceIndex, destinationIndex }, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        return response.data;
+    },
+    reorderProblem: async (listId, sectionId, sourceIndex, destinationIndex) => {
+        const response = await axios.put(`${API_URL}/lists/${listId}/sections/${sectionId}/reorder-problem`, { sourceIndex, destinationIndex }, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        return response.data;
+    }
 };
 
 export default listService;

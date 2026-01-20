@@ -78,10 +78,11 @@ const ProblemDetail = () => {
 
     // Auto-save logic
     useEffect(() => {
-        if (id !== 'new' && !submitting && !loading && formData.title) {
+        // Prevent auto-save if already modifying or saved recently
+        if (id !== 'new' && !submitting && saveStatus === '' && formData.title) {
             const timeoutId = setTimeout(() => {
                 handleSave();
-            }, 2000);
+            }, 3000); // Increased debounce to 3s
             return () => clearTimeout(timeoutId);
         }
     }, [formData]);
@@ -124,23 +125,25 @@ const ProblemDetail = () => {
 
     const handleSave = async () => {
         if (!formData.title) return;
+        if (saveStatus === 'saving') return; // Strict lock
+
         try {
             setSaveStatus('saving');
             if (id === 'new') {
                 const res = await createProblem(formData);
                 setSaveStatus('saved');
-                setTimeout(() => {
-                    // Assuming the response contains the new problem or we just go back
-                    navigate('/problems');
-                }, 1000);
+                // Use replace to prevent back-button loops
+                navigate(`/problems/${res.id || res._id}`, { replace: true });
             } else {
                 await updateProblem(id, formData);
                 setSaveStatus('saved');
+                // Clear status after delay to allow next auto-save
                 setTimeout(() => setSaveStatus(''), 3000);
             }
         } catch (err) {
             console.error('Save failed:', err);
             setSaveStatus('error');
+            setTimeout(() => setSaveStatus(''), 3000); // Reset error too
         }
     };
 

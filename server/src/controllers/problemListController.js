@@ -1,5 +1,15 @@
 import { ProblemList } from '../models/index.js';
 
+import { ProblemList, User } from '../models/index.js';
+
+const checkAdmin = async (userId) => {
+    const user = await User.findById(userId);
+    if (!user || user.email !== 'sarthak1712005@gmail.com') {
+        throw new Error('Unauthorized: Only the admin can perform this action.');
+    }
+    return true;
+};
+
 export const getLists = async (req, res) => {
     try {
         const lists = await ProblemList.find().select('name description createdAt');
@@ -12,7 +22,12 @@ export const getLists = async (req, res) => {
 export const getListByName = async (req, res) => {
     const { name } = req.params;
     try {
-        const list = await ProblemList.findOne({ name: decodeURIComponent(name) });
+        const list = await ProblemList.findOne({ name: decodeURIComponent(name) })
+            .populate({
+                path: 'sections.problems.problemRef',
+                select: 'revision_count difficulty status isSolved'
+            });
+
         if (!list) return res.status(404).json({ message: 'List not found' });
         res.status(200).json(list);
     } catch (error) {
@@ -25,6 +40,7 @@ export const addProblemToList = async (req, res) => {
     const { title, url, platform, difficulty } = req.body;
 
     try {
+        await checkAdmin(req.user.userId);
         const list = await ProblemList.findById(listId);
         if (!list) return res.status(404).json({ message: 'List not found' });
 
@@ -46,6 +62,7 @@ export const createSection = async (req, res) => {
     const { title } = req.body;
 
     try {
+        await checkAdmin(req.user.userId);
         const list = await ProblemList.findById(listId);
         if (!list) return res.status(404).json({ message: 'List not found' });
 
@@ -65,11 +82,60 @@ export const createSection = async (req, res) => {
 
 export const deleteSection = async (req, res) => {
     const { listId, sectionId } = req.params;
+    const { password } = req.body; // Expect password in body
+
     try {
+        await checkAdmin(req.user.userId);
         const list = await ProblemList.findById(listId);
         if (!list) return res.status(404).json({ message: 'List not found' });
 
+        // Check password
+        if (list.lockPassword && list.lockPassword !== password) {
+            return res.status(401).json({ message: 'Incorrect password. Access denied.' });
+        }
+
         list.sections = list.sections.filter(s => s._id.toString() !== sectionId);
+        await list.save();
+        res.status(200).json(list);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const reorderSection = async (req, res) => {
+    const { listId } = req.params;
+    const { sourceIndex, destinationIndex } = req.body;
+
+    try {
+        await checkAdmin(req.user.userId);
+        const list = await ProblemList.findById(listId);
+        if (!list) return res.status(404).json({ message: 'List not found' });
+
+        const [removed] = list.sections.splice(sourceIndex, 1);
+        list.sections.splice(destinationIndex, 0, removed);
+
+        await list.save();
+        res.status(200).json(list);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const reorderProblem = async (req, res) => {
+    const { listId, sectionId } = req.params;
+    const { sourceIndex, destinationIndex } = req.body;
+
+    try {
+        await checkAdmin(req.user.userId);
+        const list = await ProblemList.findById(listId);
+        if (!list) return res.status(404).json({ message: 'List not found' });
+
+        const section = list.sections.id(sectionId);
+        if (!section) return res.status(404).json({ message: 'Section not found' });
+
+        const [removed] = section.problems.splice(sourceIndex, 1);
+        section.problems.splice(destinationIndex, 0, removed);
+
         await list.save();
         res.status(200).json(list);
     } catch (error) {
@@ -80,6 +146,7 @@ export const deleteSection = async (req, res) => {
 export const deleteProblem = async (req, res) => {
     const { listId, sectionId, problemId } = req.params;
     try {
+        await checkAdmin(req.user.userId);
         const list = await ProblemList.findById(listId);
         if (!list) return res.status(404).json({ message: 'List not found' });
 

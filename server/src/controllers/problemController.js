@@ -60,7 +60,20 @@ export const getAllProblems = async (req, res, next) => {
         const { topic, difficulty, status, sort = 'createdAt', order = 'desc' } = req.query;
 
         // Build filter - always filter by user_id
+        // Build filter - always filter by user_id
         const filter = { user_id: userId };
+
+        // Search Logic
+        const { search } = req.query;
+        if (search) {
+            const searchRegex = new RegExp(search, 'i');
+            filter.$or = [
+                { title: searchRegex },
+                { topic: searchRegex },
+                { difficulty: searchRegex }
+            ];
+        }
+
         if (topic) filter.topic = topic;
         if (difficulty) filter.difficulty = difficulty;
         if (status) filter.status = status;

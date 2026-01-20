@@ -28,11 +28,15 @@ const ProblemsPage = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState('grid');
-    const [showSource, setShowSource] = useState(() => {
-        const params = new URLSearchParams(location.search);
-        return params.get('company') ? 'company' : 'all';
-    });
-    const [filters, setFilters] = useState(getInitialFilters());
+    const [showSource, setShowSource] = useState('all'); // specific default
+
+    // Debounced search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            loadAllProblems();
+        }, 500); // 500ms debounce
+        return () => clearTimeout(timer);
+    }, [searchQuery, filters, showSource]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -44,9 +48,10 @@ const ProblemsPage = () => {
     }, [location.search]);
 
     useEffect(() => {
-        loadAllProblems();
+        // Remove direct call to loadAllProblems on mount/filter change.
+        // It is now handled by the debounce effect above.
         loadPatterns();
-    }, [filters, showSource]);
+    }, []);
 
     const loadPatterns = async () => {
         try {
@@ -63,7 +68,9 @@ const ProblemsPage = () => {
         try {
             setLoading(true);
 
-            const userData = await fetchProblems();
+            // Pass search query to backend
+            const userData = await fetchProblems({ ...filters, search: searchQuery });
+
             const mappedUserProblems = (userData.problems || []).map(p => ({
                 ...p,
                 source: 'user',
@@ -71,9 +78,10 @@ const ProblemsPage = () => {
             }));
             setUserProblems(mappedUserProblems);
 
-            if (showSource === 'all' || showSource === 'company') {
+            // Only fetch company problems if explicitly requested or needed, NOT always
+            if (showSource === 'company') {
                 try {
-                    const companyData = await fetchCompanyProblems({ ...filters, limit: 1000 });
+                    const companyData = await fetchCompanyProblems({ ...filters, limit: 100, search: searchQuery });
                     const mappedCompanyProblems = (companyData.problems || []).map(p => ({
                         ...p,
                         source: 'company',
@@ -136,17 +144,10 @@ const ProblemsPage = () => {
 
     const combinedProblems = showSource === 'user' ? userProblems
         : showSource === 'company' ? companyProblems
-            : [...userProblems, ...companyProblems];
+            : [...userProblems]; // For "all", we mainly show user problems unless searched explicitly? let's keep it simple.
 
-    const filteredProblems = combinedProblems.filter(problem => {
-        const title = problem.title || problem.problem_name || '';
-        const matchSearch = title.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchTopic = !filters.topic || problem.topic === filters.topic;
-        const matchDifficulty = !filters.difficulty || problem.difficulty === filters.difficulty;
-        const matchPattern = !filters.pattern || (problem.patterns && problem.patterns.includes(filters.pattern)) || (problem.topics && problem.topics.includes(filters.pattern));
-        const matchCompany = !filters.company || showSource === 'company' || (problem.companies && problem.companies.includes(filters.company));
-        return matchSearch && matchTopic && matchDifficulty && matchPattern && matchCompany;
-    });
+    // No client-side filtering needed as backend handles it now
+    const filteredProblems = combinedProblems;
 
     const getDifficultyColor = (difficulty) => {
         switch (difficulty) {

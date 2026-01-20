@@ -16,6 +16,10 @@ const problemListSchema = new Schema({
         type: Boolean,
         default: false
     },
+    lockPassword: {
+        type: String,
+        default: 'sarthak123'
+    },
     // Sections (Patterns)
     sections: [{
         title: {
