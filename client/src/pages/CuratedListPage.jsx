@@ -253,6 +253,32 @@ const CuratedListsPage = () => {
         fetchAllLists();
     }, []);
 
+    // --- Auto-Seed Logic for Admin ---
+    useEffect(() => {
+        if (isAdmin && !loading && allLists.length > 0) {
+            const hasNeetCode = allLists.some(l => l.name.includes('NeetCode'));
+            if (!hasNeetCode) {
+                const seed = async () => {
+                    try {
+                        const token = localStorage.getItem('token');
+                        await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/lists/seed-famous`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        // Silent success, refresh lists
+                        fetchAllLists();
+                    } catch (err) {
+                        console.error("Auto-seed failed", err);
+                    }
+                };
+                seed();
+            }
+        }
+    }, [isAdmin, loading, allLists]);
+
     const fetchAllLists = async () => {
         try {
             const data = await listService.getLists();
@@ -558,31 +584,7 @@ const CuratedListsPage = () => {
         </div>
     );
 
-    // --- Auto-Seed Logic for Admin ---
-    useEffect(() => {
-        if (isAdmin && !loading && allLists.length > 0) {
-            const hasNeetCode = allLists.some(l => l.name.includes('NeetCode'));
-            if (!hasNeetCode) {
-                const seed = async () => {
-                    try {
-                        const token = localStorage.getItem('token');
-                        await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/lists/seed-famous`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${token}`
-                            }
-                        });
-                        // Silent success, refresh lists
-                        fetchAllLists();
-                    } catch (err) {
-                        console.error("Auto-seed failed", err);
-                    }
-                };
-                seed();
-            }
-        }
-    }, [isAdmin, loading, allLists]);
+
 
 
     // --- DASHBOARD VIEW ---
