@@ -63,6 +63,37 @@ export const createSection = async (req, res) => {
     }
 };
 
+export const deleteSection = async (req, res) => {
+    const { listId, sectionId } = req.params;
+    try {
+        const list = await ProblemList.findById(listId);
+        if (!list) return res.status(404).json({ message: 'List not found' });
+
+        list.sections = list.sections.filter(s => s._id.toString() !== sectionId);
+        await list.save();
+        res.status(200).json(list);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const deleteProblem = async (req, res) => {
+    const { listId, sectionId, problemId } = req.params;
+    try {
+        const list = await ProblemList.findById(listId);
+        if (!list) return res.status(404).json({ message: 'List not found' });
+
+        const section = list.sections.id(sectionId);
+        if (!section) return res.status(404).json({ message: 'Section not found' });
+
+        section.problems.pull(problemId);
+        await list.save();
+        res.status(200).json(list);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 export const toggleProblemCompletion = async (req, res) => {
     const { listId, sectionId, problemId } = req.params;
 

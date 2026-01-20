@@ -39,13 +39,29 @@ const createSection = async (listId, title) => {
     return response.data;
 };
 
+const deleteSection = async (listId, sectionId) => {
+    const response = await axios.delete(`${API_URL}/lists/${listId}/sections/${sectionId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+    return response.data;
+};
+
+const deleteProblem = async (listId, sectionId, problemId) => {
+    const response = await axios.delete(`${API_URL}/lists/${listId}/sections/${sectionId}/problems/${problemId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+    return response.data;
+};
+
 const listService = {
     getLists,
     getListByName,
     getListByName,
     addProblemToList,
     toggleProblemCompletion,
-    createSection
+    createSection,
+    deleteSection,
+    deleteProblem
 };
 
 export default listService;
