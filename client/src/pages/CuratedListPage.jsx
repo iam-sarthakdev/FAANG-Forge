@@ -5,7 +5,7 @@ import {
     FaExternalLinkAlt, FaPlus, FaTrophy, FaChartLine
 } from 'react-icons/fa';
 import listService from '../services/listService';
-import { Link } from 'react-router-dom';
+
 
 const CuratedListsPage = () => {
     const [list, setList] = useState(null);
