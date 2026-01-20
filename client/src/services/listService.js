@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://algoflow-api.onrender.com/api';
+const baseUrl = import.meta.env.VITE_API_URL || 'https://algoflow-api.onrender.com';
+const API_URL = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
+
 
 const getLists = async () => {
     const response = await axios.get(`${API_URL}/lists`, {
