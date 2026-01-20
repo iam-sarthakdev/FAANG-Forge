@@ -49,7 +49,7 @@ export const getAllCompanies = async (req, res) => {
 // Get all company problems (paginated)
 export const getAllCompanyProblems = async (req, res) => {
     try {
-        const { difficulty, search, page = 1, limit = 50 } = req.query;
+        const { difficulty, search, page = 1, limit = 200 } = req.query;
 
         const query = {};
 
@@ -95,7 +95,7 @@ export const getAllCompanyProblems = async (req, res) => {
 export const getCompanyProblems = async (req, res) => {
     try {
         const { company } = req.params;
-        const { difficulty, search, page = 1, limit = 50 } = req.query;
+        const { difficulty, search, page = 1, limit = 200 } = req.query;
 
         const query = { companies: company };
 

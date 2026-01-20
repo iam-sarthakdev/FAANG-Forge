@@ -57,7 +57,7 @@ export const createProblem = async (req, res, next) => {
 export const getAllProblems = async (req, res, next) => {
     try {
         const userId = req.user.userId;
-        const { topic, difficulty, status, sort = 'createdAt', order = 'desc', page = 1, limit = 50 } = req.query;
+        const { topic, difficulty, status, sort = 'createdAt', order = 'desc', page = 1, limit = 200 } = req.query;
         const skip = (page - 1) * limit;
 
         // Build filter - always filter by user_id

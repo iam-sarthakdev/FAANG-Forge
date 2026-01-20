@@ -23,6 +23,7 @@ const companyProblemSchema = new mongoose.Schema({
 // Indexes for better query performance
 companyProblemSchema.index({ companies: 1 });
 companyProblemSchema.index({ difficulty: 1 });
+companyProblemSchema.index({ frequency: -1 });
 companyProblemSchema.index({ title: 'text' });
 
 const CompanyProblem = mongoose.model('CompanyProblem', companyProblemSchema);
