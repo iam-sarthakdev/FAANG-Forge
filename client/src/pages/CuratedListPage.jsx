@@ -228,6 +228,26 @@ const CuratedListsPage = () => {
     const [viewMode, setViewMode] = useState('dashboard'); // 'dashboard' | 'list'
     const [allLists, setAllLists] = useState([]);
     const [currentListId, setCurrentListId] = useState(null);
+    const [list, setList] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [expandedSections, setExpandedSections] = useState({});
+
+    // Modal & Form States
+    const [isPatternModalOpen, setIsPatternModalOpen] = useState(false);
+    const [newPatternTitle, setNewPatternTitle] = useState('');
+    const [isProblemModalOpen, setIsProblemModalOpen] = useState(false);
+    const [selectedSection, setSelectedSection] = useState(null);
+    const [newProblem, setNewProblem] = useState({ title: '', url: '', platform: 'LeetCode', difficulty: 'Medium' });
+    const [submitting, setSubmitting] = useState(false);
+
+    // Delete/Security Modal
+    const [deleteModal, setDeleteModal] = useState({ open: false, type: null, sectionId: null, problemId: null });
+    const [deletePassword, setDeletePassword] = useState('');
+    const [verifyError, setVerifyError] = useState('');
+
+    // Sorting
+    const [sortMode, setSortMode] = useState('default'); // 'default', 'easy-hard', 'hard-easy', 'revisions-desc'
 
     useEffect(() => {
         fetchAllLists();
@@ -282,16 +302,248 @@ const CuratedListsPage = () => {
         try {
             // We need a service method for this, or call directly
             const token = localStorage.getItem('token');
-            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/lists/seed-famous`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
+            // Assuming axios is imported or we can use listService if we add extended method
+            // Ideally should use listService but for now quick fix:
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/lists/seed-famous`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
             });
+            if (!response.ok) throw new Error("Seeding failed");
             alert("Lists seeded successfully!");
             fetchAllLists();
         } catch (err) {
-            alert("Seeding failed: " + (err.response?.data?.message || err.message));
+            alert("Seeding failed: " + err.message);
         } finally {
             setSubmitting(false);
         }
+    };
+
+    // --- DnD Sensors ---
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 5,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    // --- Handlers ---
+    const toggleSection = (id) => {
+        setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
+    };
+
+    const handleCreatePattern = async (e) => {
+        e.preventDefault();
+        if (!newPatternTitle || !currentListId) return;
+        setSubmitting(true);
+        try {
+            await listService.addSection(currentListId, newPatternTitle);
+            const updated = await listService.getList(currentListId);
+            setList(updated);
+            setNewPatternTitle('');
+            setIsPatternModalOpen(false);
+        } catch (err) {
+            console.error(err);
+            alert("Failed to create module");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleAddProblem = async (e) => {
+        e.preventDefault();
+        if (!selectedSection || !currentListId) return;
+        setSubmitting(true);
+        try {
+            await listService.addProblem(currentListId, selectedSection, newProblem);
+            const updated = await listService.getList(currentListId);
+            setList(updated);
+            setNewProblem({ title: '', url: '', platform: 'LeetCode', difficulty: 'Medium' });
+            setIsProblemModalOpen(false);
+        } catch (err) {
+            console.error(err);
+            alert("Failed to add problem");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const openDeleteModal = (type, sectionId, problemId = null) => {
+        setDeleteModal({ open: true, type, sectionId, problemId });
+        setDeletePassword('');
+        setVerifyError('');
+    };
+
+    const confirmDelete = async () => {
+        if (deleteModal.type === 'section') {
+            if (deleteModal.type === 'section' && deletePassword !== 'sarthak123') {
+                setVerifyError('Incorrect Password');
+                return;
+            }
+            try {
+                await listService.deleteSection(currentListId, deleteModal.sectionId);
+                const updated = await listService.getList(currentListId);
+                setList(updated);
+                setDeleteModal({ open: false, type: null, sectionId: null, problemId: null });
+            } catch (err) {
+                alert("Failed to delete section");
+            }
+        } else {
+            try {
+                await listService.deleteProblem(currentListId, deleteModal.sectionId, deleteModal.problemId);
+                const updated = await listService.getList(currentListId);
+                setList(updated);
+                setDeleteModal({ open: false, type: null, sectionId: null, problemId: null });
+            } catch (err) {
+                alert("Failed to delete problem");
+            }
+        }
+    };
+
+    const handleToggleCompletion = async (sectionId, problemId, e) => {
+        e.stopPropagation();
+        // Optimistic update
+        const updatedList = { ...list };
+        updatedList.sections = updatedList.sections.map(s => {
+            if (s._id === sectionId) {
+                return {
+                    ...s,
+                    problems: s.problems.map(p => {
+                        if (p._id === problemId) return { ...p, isCompleted: !p.isCompleted };
+                        return p;
+                    })
+                };
+            }
+            return s;
+        });
+        setList(updatedList);
+
+        try {
+            await listService.toggleCompletion(currentListId, sectionId, problemId);
+        } catch (err) {
+            console.error(err);
+            // Revert on error (could fetch list again)
+        }
+    };
+
+    const handleIncrementRevision = async (sectionId, problemId, e) => {
+        e.stopPropagation();
+        // Optimistic
+        const updatedList = { ...list };
+        updatedList.sections = updatedList.sections.map(s => {
+            if (s._id === sectionId) {
+                return {
+                    ...s,
+                    problems: s.problems.map(p => {
+                        if (p._id === problemId) return { ...p, revision_count: (p.revision_count || 0) + 1 };
+                        return p;
+                    })
+                };
+            }
+            return s;
+        });
+        setList(updatedList);
+
+        try {
+            await markAsRevised(problemId); // Assuming we have global ID or separate service? 
+            // Actually usually integrated. Let's assume listService handles it or valid endpoint.
+            // checking imports... import { markAsRevised } from '../services/api'; -> Correct.
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+
+    // --- Drag and Drop Handlers ---
+    const [activeItem, setActiveItem] = useState(null);
+
+    const handleDragStart = (event) => {
+        const { active } = event;
+        const section = list.sections.find(s => s._id === active.id);
+        if (section) {
+            setActiveItem({ ...section, type: 'section' });
+            return;
+        }
+        // Find problem
+        for (const s of list.sections) {
+            const problem = s.problems.find(p => p._id === active.id);
+            if (problem) {
+                setActiveItem({ ...problem, type: 'problem' });
+                return;
+            }
+        }
+    };
+
+    const handleDragEnd = async (event) => {
+        const { active, over } = event;
+        setActiveItem(null);
+
+        if (!over) return;
+
+        // Section Reorder
+        if (activeItem?.type === 'section') {
+            if (active.id !== over.id) {
+                const oldIndex = list.sections.findIndex(s => s._id === active.id);
+                const newIndex = list.sections.findIndex(s => s._id === over.id);
+
+                // Optimistic
+                const newSections = arrayMove(list.sections, oldIndex, newIndex);
+                setList({ ...list, sections: newSections });
+
+                try {
+                    await listService.reorderSection(currentListId, active.id, newIndex);
+                } catch (err) {
+                    console.error("Reorder failed", err);
+                }
+            }
+        }
+    };
+
+    // Sort Logic
+    const sortedSections = useMemo(() => {
+        if (!list || !list.sections) return [];
+        let sections = [...list.sections];
+
+        // Sorting problems within sections
+        if (sortMode !== 'default') {
+            sections = sections.map(s => {
+                let problems = [...s.problems];
+                if (sortMode === 'easy-hard') {
+                    const diffOrder = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
+                    problems.sort((a, b) => (diffOrder[a.difficulty] || 99) - (diffOrder[b.difficulty] || 99));
+                } else if (sortMode === 'hard-easy') {
+                    const diffOrder = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
+                    problems.sort((a, b) => (diffOrder[b.difficulty] || -1) - (diffOrder[a.difficulty] || -1));
+                } else if (sortMode === 'revisions-desc') {
+                    problems.sort((a, b) => (b.revision_count || 0) - (a.revision_count || 0));
+                }
+                return { ...s, problems };
+            });
+        }
+        return sections;
+    }, [list, sortMode]);
+
+    const renderDragOverlay = () => {
+        if (!activeItem) return null;
+        // Return simplified view for drag preview
+        if (activeItem.type === 'section') {
+            return (
+                <div className="p-4 bg-[#1e1e24] border border-violet-500/50 rounded-xl shadow-2xl w-[300px]">
+                    <span className="font-bold text-white">{activeItem.title}</span>
+                </div>
+            );
+        }
+        return (
+            <div className="p-3 bg-[#1e1e24] border border-violet-500/50 rounded-lg shadow-2xl w-[300px]">
+                <span className="text-sm font-medium text-slate-200">{activeItem.title}</span>
+            </div>
+        );
     };
 
     if (loading && !list && allLists.length === 0) return (
