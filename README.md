@@ -55,6 +55,20 @@ Built with a premium glassmorphic UI and enterprise-grade architecture, FAANG Fo
 - **Revision Tracking**: Monitor solve count, last revised date, and upcoming reminders
 - **Company Database**: Browse problems by specific companies (Google, Amazon, Meta, etc.)
 
+### 📋 **Curated DSA Sheets** *(NEW)*
+| Sheet | Problems | Description |
+|-------|----------|-------------|
+| **Sarthak's List** | Custom | Your personalized curated list with drag-drop reordering |
+| **NeetCode 150** | 150 | The famous Blind 75 + essential patterns for FAANG |
+| **Striver's A2Z** | 455+ | Comprehensive A2Z DSA Course Sheet |
+| **NeetCode All** | 250+ | Complete NeetCode collection covering all patterns |
+| **Love Babbar 450** | 370+ | Famous DSA sheet for cracking FAANG interviews |
+
+- **Pattern-Based Organization**: Problems grouped by topics (Arrays, Trees, DP, etc.)
+- **Progress Tracking**: Track completion percentage for each sheet
+- **Sync Functionality**: One-click sync to fetch latest curated sheets
+- **Difficulty Tags**: Easy, Medium, Hard difficulty indicators
+
 ### 📊 **Advanced Analytics Dashboard**
 - **Revision Streak**: Gamified daily streak tracking
 - **Topic Distribution**: Visual breakdown by data structures
@@ -451,30 +465,27 @@ FAANG-Forge/
 
 ---
 
+## 📸 Screenshots
+
 ### Dashboard
 ![Dashboard](screenshots/dashboard.png)
+*Your automated coding growth engine with stats, streak tracking, and weekly activity*
 
-### DSA Sheets
-![DSA Sheets](screenshots/dsa_sheets.png)
+### Curated DSA Sheets
+![Curated Sheets](screenshots/curated_sheets.png)
+*Access famous sheets: Sarthak's List, NeetCode 150, Striver's A2Z, NeetCode All, Love Babbar 450*
 
 ### All Problems
 ![All Problems](screenshots/all_problems.png)
+*Browse, filter, and manage your DSA problems with pattern tags and revision tracking*
 
-### Fundamentals (OS/DBMS)
+### Fundamentals (OS/DBMS/Networks)
 ![Fundamentals](screenshots/fundamentals.png)
+*Comprehensive CS fundamentals with structured chapters and progress tracking*
 
-### System Design (LLD/HLD)
+### System Design (HLD/LLD)
 ![System Design](screenshots/system_design.png)
-
-### Analytics & Performance
-![Analytics](screenshots/analytics.png)
-
-### Company Database
-![Companies](screenshots/companies.png)
-
-### Behavioral Preparation
-![Behavioral](screenshots/behavioral.png)
-
+*Learn system design concepts with interactive diagrams and real-world examples*
 
 ---
 
