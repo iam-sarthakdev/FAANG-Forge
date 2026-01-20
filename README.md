@@ -305,8 +305,14 @@ FAANG-Forge/
    ```
 
 6. **Access the app**
+   
+   **Live Production Build:**
+   - Frontend: [https://algo-flow-khaki.vercel.app/](https://algo-flow-khaki.vercel.app/)
+   
+   **Local Environment:**
    - Frontend: `http://localhost:5173`
    - Backend: `http://localhost:5000`
+
 
 ---
 
