@@ -5,6 +5,7 @@ import {
     ExternalLink, Plus, Trophy, Layers, Trash2, Github, Globe, Sparkles,
     Lock, ArrowUp, ArrowDown, RefreshCw, ArrowUpDown, GripVertical
 } from 'lucide-react';
+import { markAsRevised } from '../services/api';
 import {
     DndContext,
     closestCenter,
@@ -110,7 +111,7 @@ const SortableSectionItem = ({ section, idx, isExpanded, toggleSection, openDele
     );
 };
 
-const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleToggleCompletion, isAdmin }) => {
+const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleToggleCompletion, handleIncrementRevision, isAdmin }) => {
     const {
         attributes,
         listeners,
@@ -160,7 +161,19 @@ const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleT
                         >
                             {problem.title}
                         </a>
-                        <div className="flex gap-2 mt-2">
+                        <div className="flex gap-2 mt-2 items-center">
+                            {/* Revision Count */}
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-medium">
+                                <RefreshCw size={12} />
+                                <span>{problem.revision_count || 0}</span>
+                                <button
+                                    onClick={(e) => handleIncrementRevision(sectionId, problem._id, e)}
+                                    className="ml-1 p-0.5 rounded hover:bg-orange-500/20 text-orange-400 transition-colors"
+                                >
+                                    <Plus size={10} strokeWidth={3} />
+                                </button>
+                            </div>
+
                             <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-md border tracking-wider ${problem.difficulty === 'Easy' ? 'bg-green-900/20 text-green-400 border-green-500/20' :
                                 problem.difficulty === 'Medium' ? 'bg-yellow-900/20 text-yellow-400 border-yellow-500/20' :
                                     problem.difficulty === 'Hard' ? 'bg-red-900/20 text-red-400 border-red-500/20' :
@@ -440,6 +453,33 @@ const CuratedListsPage = () => {
         }
     };
 
+    const handleIncrementRevision = async (sectionId, problemId, e) => {
+        e.stopPropagation();
+        try {
+            // Optimistic Update
+            const updatedSections = list.sections.map(section => {
+                if (section._id === sectionId) {
+                    return {
+                        ...section,
+                        problems: section.problems.map(p => {
+                            if (p._id === problemId) {
+                                return { ...p, revision_count: (p.revision_count || 0) + 1 };
+                            }
+                            return p;
+                        })
+                    };
+                }
+                return section;
+            });
+            setList({ ...list, sections: updatedSections });
+
+            await markAsRevised(problemId, { notes: 'Manual increment from list' });
+        } catch (err) {
+            console.error(err);
+            fetchList();
+        }
+    };
+
     if (loading) return (
         <div className="min-h-screen bg-[#030014] flex items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-fuchsia-500"></div>
@@ -506,7 +546,7 @@ const CuratedListsPage = () => {
                             <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center border border-white/10 shadow-lg">
                                 <Layers size={20} className="text-violet-300" />
                             </span>
-                            Modules
+                            Modules/Patterns
                         </h2>
 
                         <div className="relative group">
@@ -577,6 +617,7 @@ const CuratedListsPage = () => {
                                                     idx={pIdx}
                                                     openDeleteModal={openDeleteModal}
                                                     handleToggleCompletion={handleToggleCompletion}
+                                                    handleIncrementRevision={handleIncrementRevision}
                                                     isAdmin={isAdmin}
                                                 />
                                             ))}

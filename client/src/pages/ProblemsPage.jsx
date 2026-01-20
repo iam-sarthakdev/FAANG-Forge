@@ -22,6 +22,7 @@ const ProblemsPage = () => {
         };
     };
 
+    const [filters, setFilters] = useState(getInitialFilters());
     const [userProblems, setUserProblems] = useState([]);
     const [companyProblems, setCompanyProblems] = useState([]);
     const [patterns, setPatterns] = useState([]);
