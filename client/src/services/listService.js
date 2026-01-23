@@ -19,7 +19,7 @@ const getListByName = async (name) => {
 };
 
 const addProblemToList = async (listId, sectionTitle, problemData) => {
-    const response = await axios.post(`${API_URL}/lists/${listId}/sections/${sectionTitle}/problems`, problemData, {
+    const response = await axios.post(`${API_URL}/lists/${listId}/sections/${encodeURIComponent(sectionTitle)}/problems`, problemData, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     });
     return response.data;
