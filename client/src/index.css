@@ -35,16 +35,16 @@
   }
   
   .glass-card {
-    @apply bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl shadow-lg hover:bg-white/10 transition-all duration-300;
+    @apply bg-[#111113] border border-white/[0.06] rounded-xl shadow-sm hover:border-white/10 transition-colors duration-200;
   }
 
   /* --- Typography Utilities --- */
   .heading-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/70;
+    @apply text-white;
   }
 
   .text-glow {
-    text-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+    /* Removed heavy text glow for cleaner look */
   }
 
   /* --- Custom Scrollbar --- */

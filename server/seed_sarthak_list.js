@@ -17,7 +17,7 @@ const sarthaksList = {
     description: "Curated list of DSA patterns and problems.",
     sections: [
         {
-            title: "Binary Search",
+            title: "Binary Search Basic & Advanced",
             problems: [
                 { title: "Binary Search", url: "https://leetcode.com/problems/binary-search/", platform: "LeetCode", difficulty: "Easy" },
                 { title: "Search Insert Position", url: "https://leetcode.com/problems/search-insert-position/", platform: "LeetCode", difficulty: "Easy" },
@@ -171,7 +171,7 @@ const sarthaksList = {
         // Adding other categories similarly...
         {
             title: "Trees",
-            problems: [] // User asked for separate sections for these
+            problems: [] 
         },
         {
             title: "Binary Search Tree",

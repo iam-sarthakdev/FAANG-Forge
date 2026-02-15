@@ -178,6 +178,20 @@ export const toggleProblemCompletion = async (req, res) => {
         problem.isCompleted = !problem.isCompleted;
         await list.save();
 
+        // Track activity for streak — create a Revision entry when marking as completed
+        if (problem.isCompleted) {
+            try {
+                const refId = problem.problemRef || problem._id;
+                await Revision.create({
+                    user_id: req.user.userId,
+                    problem_id: refId,
+                    notes: `Completed: ${problem.title}`
+                });
+            } catch (err) {
+                console.warn('Failed to track completion activity:', err.message);
+            }
+        }
+
         res.status(200).json(list);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -203,17 +217,16 @@ export const incrementProblemRevision = async (req, res) => {
         list.markModified('sections');
         await list.save();
 
-        // Sync with global Revision history if linked
-        if (problem.problemRef) {
-            try {
-                await Revision.create({
-                    user_id: req.user.userId,
-                    problem_id: problem.problemRef,
-                    notes: 'Quick Revision from List'
-                });
-            } catch (err) {
-                console.warn('Failed to sync global revision:', err.message);
-            }
+        // Always create a Revision entry for activity tracking (streak, analytics)
+        try {
+            const refId = problem.problemRef || problem._id;
+            await Revision.create({
+                user_id: req.user.userId,
+                problem_id: refId,
+                notes: `Revised: ${problem.title}`
+            });
+        } catch (err) {
+            console.warn('Failed to track revision activity:', err.message);
         }
 
         res.status(200).json(list);

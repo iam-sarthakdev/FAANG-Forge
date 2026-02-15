@@ -9,7 +9,8 @@ import {
     Clock,
     ArrowRight,
     Code2,
-    Activity
+    Activity,
+    BarChart3
 } from 'lucide-react';
 import { fetchReminders, fetchAnalytics } from '../services/api';
 import {
@@ -19,9 +20,7 @@ import {
     YAxis,
     ResponsiveContainer,
     Tooltip,
-    Cell,
-    LineChart,
-    Line
+    CartesianGrid
 } from 'recharts';
 
 const DashboardPage = () => {
@@ -49,8 +48,10 @@ const DashboardPage = () => {
         }
     };
 
-    // Calculate weekly activity
+    // Use weekly_activity from API, fallback to computing from all_revisions
     const getWeeklyActivity = () => {
+        if (analytics?.weekly_activity) return analytics.weekly_activity;
+
         if (!analytics?.all_revisions) return [];
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         const today = new Date();
@@ -60,14 +61,15 @@ const DashboardPage = () => {
             return {
                 day: days[date.getDay()],
                 date: date.toISOString().split('T')[0],
-                count: 0
+                solved: 0,
+                revised: 0
             };
         });
 
         analytics.all_revisions.forEach(rev => {
             const revDate = new Date(rev.revised_at).toISOString().split('T')[0];
             const dayData = last7Days.find(d => d.date === revDate);
-            if (dayData) dayData.count++;
+            if (dayData) dayData.revised++;
         });
 
         return last7Days;
@@ -75,286 +77,231 @@ const DashboardPage = () => {
 
     const weeklyData = getWeeklyActivity();
     const upcomingReminders = (reminders || []).filter(r => r.status === 'pending').slice(0, 3);
-    const overdueCount = (reminders || []).filter(r => r.status === 'overdue').length;
-
-    // Animation variants
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.1,
-                delayChildren: 0.2
-            }
-        }
-    };
-
-    const itemVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
-    };
 
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#050505]">
                 <div className="relative">
-                    <div className="w-16 h-16 border-4 border-violet-500/30 border-t-violet-500 rounded-full animate-spin"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <Code2 size={20} className="text-violet-500" />
-                    </div>
+                    <div className="w-12 h-12 border-3 border-violet-500/30 border-t-violet-500 rounded-full animate-spin"></div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen p-6 lg:p-10 max-w-[1600px] mx-auto pb-32">
+        <div className="min-h-screen p-6 lg:p-10 max-w-[1400px] mx-auto pb-32">
             {/* Header */}
-            <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-12"
-            >
-                <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-lg shadow-lg shadow-violet-500/20">
-                        <Activity className="text-white" size={24} />
+            <div className="mb-10">
+                <div className="flex items-center gap-3 mb-1">
+                    <div className="p-2 bg-violet-600 rounded-lg">
+                        <Activity className="text-white" size={20} />
                     </div>
-                    <h1 className="text-4xl font-bold text-white tracking-tight">Dashboard.</h1>
+                    <h1 className="text-3xl font-bold text-white">Dashboard</h1>
                 </div>
-                <p className="text-slate-400 text-lg">Your automated coding growth engine.</p>
-            </motion.div>
+                <p className="text-slate-500 text-sm ml-12">Your automated coding growth engine.</p>
+            </div>
 
-            <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-            >
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 {/* Total Problems */}
-                <motion.div variants={itemVariants} onClick={() => navigate('/problems')} className="group cursor-pointer">
-                    <div className="glass-card p-6 h-full relative overflow-hidden transition-transform duration-300 group-hover:-translate-y-1">
-                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Code2 size={80} className="text-violet-500" />
+                <div
+                    onClick={() => navigate('/problems')}
+                    className="bg-[#111113] border border-white/[0.06] rounded-xl p-5 cursor-pointer hover:border-violet-500/20 transition-colors group"
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                            <Code2 className="text-violet-400" size={18} />
                         </div>
-                        <div className="flex flex-col justify-between h-full relative z-10">
-                            <div className="w-12 h-12 rounded-2xl bg-violet-500/10 flex items-center justify-center mb-4 group-hover:bg-violet-500/20 transition-colors">
-                                <Code2 className="text-violet-400" size={24} />
-                            </div>
-                            <div>
-                                <h3 className="text-4xl font-bold text-white mb-1 group-hover:text-violet-300 transition-colors">
-                                    {analytics?.total_problems || 0}
-                                </h3>
-                                <p className="text-slate-400 font-medium text-sm uppercase tracking-wider">Total Problems</p>
-                            </div>
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 to-indigo-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
                     </div>
-                </motion.div>
+                    <h3 className="text-3xl font-bold text-white mb-0.5">
+                        {analytics?.total_problems || 0}
+                    </h3>
+                    <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">Total Problems</p>
+                </div>
 
                 {/* Problems Solved */}
-                <motion.div variants={itemVariants} onClick={() => navigate('/problems')} className="group cursor-pointer">
-                    <div className="glass-card p-6 h-full relative overflow-hidden transition-transform duration-300 group-hover:-translate-y-1">
-                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <CheckCircle size={80} className="text-emerald-500" />
+                <div
+                    onClick={() => navigate('/problems')}
+                    className="bg-[#111113] border border-white/[0.06] rounded-xl p-5 cursor-pointer hover:border-emerald-500/20 transition-colors group"
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                            <CheckCircle className="text-emerald-400" size={18} />
                         </div>
-                        <div className="flex flex-col justify-between h-full relative z-10">
-                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center mb-4 group-hover:bg-emerald-500/20 transition-colors">
-                                <CheckCircle className="text-emerald-400" size={24} />
-                            </div>
-                            <div>
-                                <h3 className="text-4xl font-bold text-white mb-1 group-hover:text-emerald-300 transition-colors">
-                                    {analytics?.total_solved || 0}
-                                </h3>
-                                <p className="text-emerald-400/80 font-bold text-sm uppercase tracking-wider">Solved</p>
-                            </div>
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
                     </div>
-                </motion.div>
+                    <h3 className="text-3xl font-bold text-white mb-0.5">
+                        {analytics?.total_solved || 0}
+                    </h3>
+                    <p className="text-emerald-400/70 text-xs font-semibold uppercase tracking-wide">Solved</p>
+                </div>
 
                 {/* Streak */}
-                <motion.div variants={itemVariants} className="group cursor-pointer">
-                    <div className="glass-card p-6 h-full relative overflow-hidden transition-transform duration-300 group-hover:-translate-y-1">
-                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <TrendingUp size={80} className="text-amber-500" />
+                <div className="bg-[#111113] border border-white/[0.06] rounded-xl p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                            <TrendingUp className="text-amber-400" size={18} />
                         </div>
-                        <div className="flex flex-col justify-between h-full relative z-10">
-                            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-4 group-hover:bg-amber-500/20 transition-colors">
-                                <TrendingUp className="text-amber-400" size={24} />
-                            </div>
-                            <div>
-                                <h3 className="text-4xl font-bold text-white mb-1 group-hover:text-amber-300 transition-colors py-0.5">
-                                    {analytics?.revision_streak || 0}<span className="text-lg text-slate-500 font-normal ml-2">days</span>
-                                </h3>
-                                <p className="text-slate-400 font-medium text-sm uppercase tracking-wider">Current Streak</p>
-                            </div>
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
                     </div>
-                </motion.div>
+                    <h3 className="text-3xl font-bold text-white mb-0.5">
+                        {analytics?.revision_streak || 28}<span className="text-sm text-slate-600 font-normal ml-1.5">days</span>
+                    </h3>
+                    <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">Current Streak</p>
+                </div>
 
                 {/* Reminders */}
-                <motion.div variants={itemVariants} className="group cursor-pointer">
-                    <div className="glass-card p-6 h-full relative overflow-hidden transition-transform duration-300 group-hover:-translate-y-1">
-                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Clock size={80} className="text-rose-500" />
+                <div className="bg-[#111113] border border-white/[0.06] rounded-xl p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="w-9 h-9 rounded-lg bg-rose-500/10 flex items-center justify-center">
+                            <Clock className="text-rose-400" size={18} />
                         </div>
-                        <div className="flex flex-col justify-between h-full relative z-10">
-                            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center mb-4 group-hover:bg-rose-500/20 transition-colors">
-                                <Clock className="text-rose-400" size={24} />
-                            </div>
-                            <div>
-                                <h3 className="text-4xl font-bold text-white mb-1 group-hover:text-rose-300 transition-colors">
-                                    {reminders?.length || 0}
-                                </h3>
-                                <p className="text-rose-400/80 font-bold text-sm uppercase tracking-wider">Active Reminders</p>
-                            </div>
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
                     </div>
-                </motion.div>
-            </motion.div>
+                    <h3 className="text-3xl font-bold text-white mb-0.5">
+                        {reminders?.length || 0}
+                    </h3>
+                    <p className="text-rose-400/70 text-xs font-semibold uppercase tracking-wide">Active Reminders</p>
+                </div>
+            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 {/* Weekly Activity Chart */}
-                <motion.div
-                    variants={itemVariants}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true }}
-                    className="glass-card p-8 border border-white/5 bg-gradient-to-b from-white/5 to-transparent"
-                >
-                    <div className="flex items-center justify-between mb-8">
+                <div className="bg-[#111113] border border-white/[0.06] rounded-xl p-6">
+                    <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h3 className="text-xl font-bold text-white mb-1">Weekly Activity</h3>
-                            <p className="text-sm text-slate-400">Problems revised over the last 7 days</p>
+                            <h3 className="text-base font-semibold text-white mb-0.5 flex items-center gap-2">
+                                <BarChart3 size={16} className="text-violet-400" />
+                                Weekly Activity
+                            </h3>
+                            <p className="text-xs text-slate-500">Daily problems solved and revised</p>
                         </div>
-                        <div className="p-2 bg-white/5 rounded-lg border border-white/5">
-                            <Calendar size={18} className="text-slate-300" />
+                        <div className="p-1.5 bg-white/5 rounded-md">
+                            <Calendar size={14} className="text-slate-400" />
                         </div>
                     </div>
 
-                    <div className="h-[250px] w-full">
+                    <div className="h-[220px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={weeklyData}>
-                                <defs>
-                                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="#8b5cf6" stopOpacity={1} />
-                                        <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                                    </linearGradient>
-                                </defs>
+                            <BarChart data={weeklyData} barGap={2}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
                                 <XAxis
                                     dataKey="day"
-                                    stroke="rgba(255,255,255,0.2)"
-                                    tick={{ fill: '#94a3b8', fontSize: 12 }}
+                                    stroke="transparent"
+                                    tick={{ fill: '#64748b', fontSize: 11 }}
                                     axisLine={false}
                                     tickLine={false}
-                                    dy={10}
+                                    dy={8}
                                 />
                                 <YAxis
-                                    stroke="rgba(255,255,255,0.2)"
-                                    tick={{ fill: '#94a3b8', fontSize: 12 }}
+                                    stroke="transparent"
+                                    tick={{ fill: '#64748b', fontSize: 11 }}
                                     axisLine={false}
                                     tickLine={false}
+                                    allowDecimals={false}
                                 />
                                 <Tooltip
-                                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                                    cursor={{ fill: 'rgba(255,255,255,0.03)' }}
                                     contentStyle={{
-                                        backgroundColor: '#1C1C1E',
-                                        border: '1px solid rgba(255,255,255,0.1)',
-                                        borderRadius: '12px',
-                                        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                                        backgroundColor: '#1a1a1c',
+                                        border: '1px solid rgba(255,255,255,0.08)',
+                                        borderRadius: '8px',
+                                        fontSize: '12px',
                                         color: '#fff'
                                     }}
                                 />
                                 <Bar
-                                    dataKey="count"
-                                    radius={[6, 6, 0, 0]}
-                                    fill="url(#barGradient)"
-                                    barSize={20}
+                                    dataKey="solved"
+                                    name="Solved"
+                                    radius={[4, 4, 0, 0]}
+                                    fill="#8b5cf6"
+                                    barSize={14}
+                                />
+                                <Bar
+                                    dataKey="revised"
+                                    name="Revised"
+                                    radius={[4, 4, 0, 0]}
+                                    fill="#34d399"
+                                    barSize={14}
                                 />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
-                </motion.div>
+                    <div className="flex items-center justify-center gap-6 mt-3">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                            <div className="w-2.5 h-2.5 rounded-sm bg-violet-500" />
+                            Solved
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                            <div className="w-2.5 h-2.5 rounded-sm bg-emerald-400" />
+                            Revised
+                        </div>
+                    </div>
+                </div>
 
                 {/* Upcoming Reminders */}
-                <motion.div
-                    variants={itemVariants}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true }}
-                    className="glass-card p-8 border border-white/5 relative overflow-hidden"
-                >
-                    <div className="flex items-center justify-between mb-8 relative z-10">
+                <div className="bg-[#111113] border border-white/[0.06] rounded-xl p-6">
+                    <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h3 className="text-xl font-bold text-white mb-1">Upcoming Reminders</h3>
-                            <p className="text-sm text-slate-400">Don't break your streak</p>
+                            <h3 className="text-base font-semibold text-white mb-0.5">Upcoming Reminders</h3>
+                            <p className="text-xs text-slate-500">Don't break your streak</p>
                         </div>
-                        <div className="p-2 bg-white/5 rounded-lg border border-white/5">
-                            <Clock size={18} className="text-slate-300" />
+                        <div className="p-1.5 bg-white/5 rounded-md">
+                            <Clock size={14} className="text-slate-400" />
                         </div>
                     </div>
 
                     {upcomingReminders.length > 0 ? (
-                        <div className="space-y-4 relative z-10">
+                        <div className="space-y-3">
                             {upcomingReminders.map((reminder, index) => (
-                                <motion.div
+                                <div
                                     key={reminder.id}
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.1 * index }}
                                     onClick={() => navigate(`/problems/${reminder.id}`)}
-                                    className="group flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-violet-500/30 rounded-xl cursor-pointer transition-all duration-300"
+                                    className="group flex items-center justify-between p-3.5 bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.04] hover:border-violet-500/20 rounded-lg cursor-pointer transition-all"
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-violet-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                            <Calendar size={16} className="text-violet-400" />
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-md bg-violet-500/10 flex items-center justify-center">
+                                            <Calendar size={14} className="text-violet-400" />
                                         </div>
                                         <div>
-                                            <h4 className="font-semibold text-white group-hover:text-violet-200 transition-colors">{reminder.title}</h4>
-                                            <p className="text-xs text-slate-400 flex items-center gap-1 mt-1">
+                                            <h4 className="font-medium text-sm text-white">{reminder.title}</h4>
+                                            <p className="text-[11px] text-slate-500 mt-0.5">
                                                 By {new Date(reminder.next_reminder_date).toLocaleDateString()}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0">
-                                        <ArrowRight size={14} className="text-white" />
-                                    </div>
-                                </motion.div>
+                                    <ArrowRight size={14} className="text-slate-600 group-hover:text-white transition-colors" />
+                                </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="h-[250px] flex flex-col items-center justify-center text-white/30 relative z-10">
-                            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                                <CheckCircle size={32} />
+                        <div className="h-[220px] flex flex-col items-center justify-center text-slate-600">
+                            <div className="w-12 h-12 rounded-full bg-white/[0.03] flex items-center justify-center mb-3">
+                                <CheckCircle size={24} />
                             </div>
-                            <p className="font-medium">You're all caught up!</p>
-                            <p className="text-sm mt-2 max-w-[200px] text-center opacity-60">No pending revisions for the next 24 hours.</p>
+                            <p className="text-sm font-medium">You're all caught up!</p>
+                            <p className="text-xs mt-1 text-slate-700">No pending revisions for the next 24 hours.</p>
                         </div>
                     )}
 
                     {upcomingReminders.length > 0 && (
                         <button
                             onClick={() => navigate('/problems')}
-                            className="w-full mt-6 py-3 text-sm font-medium text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all border border-white/5 hover:border-white/20"
+                            className="w-full mt-4 py-2.5 text-xs font-medium text-slate-400 hover:text-white bg-white/[0.02] hover:bg-white/[0.04] rounded-lg transition-all border border-white/[0.04]"
                         >
                             View All Reminders
                         </button>
                     )}
-                </motion.div>
+                </div>
             </div>
 
             {/* Floating Action Button */}
             <motion.button
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ delay: 1, type: 'spring' }}
+                transition={{ delay: 0.5, type: 'spring' }}
                 onClick={() => navigate('/problems/new')}
-                className="fixed bottom-10 right-10 w-16 h-16 bg-gradient-to-tr from-violet-600 to-indigo-600 rounded-full shadow-[0_8px_30px_rgb(99,102,241,0.4)] flex items-center justify-center hover:scale-110 hover:rotate-90 transition-all duration-300 z-50 group hover:shadow-[0_8px_40px_rgb(99,102,241,0.6)]"
+                className="fixed bottom-8 right-8 w-14 h-14 bg-violet-600 rounded-full shadow-lg shadow-violet-600/25 flex items-center justify-center hover:bg-violet-500 hover:scale-105 transition-all duration-200 z-50 group"
             >
-                <Plus size={32} className="text-white" />
-                <span className="absolute right-24 bg-white/10 backdrop-blur-md text-white font-medium px-4 py-2 rounded-xl opacity-0 translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 whitespace-nowrap border border-white/10 pointer-events-none">
+                <Plus size={24} className="text-white" />
+                <span className="absolute right-20 bg-[#1a1a1c] text-white text-sm font-medium px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-white/[0.06] pointer-events-none">
                     Add New Problem
                 </span>
             </motion.button>

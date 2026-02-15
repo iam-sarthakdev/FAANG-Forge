@@ -43,51 +43,70 @@ const SortableSectionItem = ({ section, idx, isExpanded, toggleSection, openDele
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
-        zIndex: isDragging ? 999 : 'auto' // ensure visibility on drag
+        zIndex: isDragging ? 999 : 'auto'
     };
+
+    // Section stats
+    const totalProblems = section.problems.length;
+    const solvedCount = section.problems.filter(p => p.isCompleted).length;
+    const totalRevisions = section.problems.reduce((acc, p) => acc + (p.revision_count || 0), 0);
+    const completionPct = totalProblems > 0 ? Math.round((solvedCount / totalProblems) * 100) : 0;
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                className="group/section bg-[#0e0e12]/60 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-sm hover:border-violet-500/30 transition-all duration-300 hover:shadow-lg hover:shadow-violet-900/10 mb-4"
+            <div
+                className="group/section bg-[#111113] border border-white/[0.06] rounded-xl overflow-hidden hover:border-violet-500/20 transition-colors mb-3"
             >
-                <div
-                    className="w-full p-5 flex items-center justify-between"
-                >
-                    <div className="flex items-center gap-5 flex-1 cursor-pointer" onClick={() => toggleSection(section._id)}>
+                <div className="w-full p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4 flex-1 cursor-pointer" onClick={() => toggleSection(section._id)}>
                         {isAdmin && (
-                            <div {...listeners} className="cursor-grab active:cursor-grabbing text-slate-600 hover:text-slate-400 p-2 -ml-2">
-                                <GripVertical size={20} />
+                            <div {...listeners} className="cursor-grab active:cursor-grabbing text-slate-600 hover:text-slate-400 p-1 -ml-1">
+                                <GripVertical size={18} />
                             </div>
                         )}
-                        <div className={`p-3.5 rounded-xl transition-colors duration-300 ${isExpanded ? 'bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-lg' : 'bg-white/5 text-slate-400 group-hover/section:text-white'}`}>
-                            <Layers size={20} />
+                        <div className={`p-2.5 rounded-lg transition-colors ${isExpanded ? 'bg-violet-600 text-white' : 'bg-white/[0.04] text-slate-400 group-hover/section:text-white'}`}>
+                            <Layers size={18} />
                         </div>
-                        <div>
-                            <h3 className={`text-lg font-bold transition-colors ${isExpanded ? 'text-white' : 'text-slate-300 group-hover/section:text-white'}`}>
-                                {section.title}
-                            </h3>
-                            <p className="text-sm text-slate-500 mt-0.5">{section.problems.length} Challenges</p>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3">
+                                <h3 className={`text-base font-semibold transition-colors ${isExpanded ? 'text-white' : 'text-slate-300 group-hover/section:text-white'}`}>
+                                    {section.title}
+                                </h3>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                        {solvedCount}/{totalProblems} solved
+                                    </span>
+                                    {totalRevisions > 0 && (
+                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                            {totalRevisions} revisions
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            {/* Mini progress bar */}
+                            <div className="mt-2 h-1 w-full max-w-[200px] bg-white/[0.04] rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-violet-500 rounded-full transition-all duration-500"
+                                    style={{ width: `${completionPct}%` }}
+                                />
+                            </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                         {isAdmin && (
                             <button
                                 onClick={(e) => { e.stopPropagation(); openDeleteModal('section', section._id); }}
-                                className="p-2 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover/section:opacity-100"
+                                className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors opacity-0 group-hover/section:opacity-100"
                                 title="Delete Module"
                             >
-                                <Lock size={16} className="text-red-500/50" />
+                                <Lock size={14} className="text-red-500/50" />
                             </button>
                         )}
                         <div
                             onClick={() => toggleSection(section._id)}
-                            className={`p-2 rounded-full bg-white/5 text-slate-400 transition-transform duration-300 cursor-pointer ${isExpanded ? 'rotate-180 bg-white/10 text-white' : ''}`}
+                            className={`p-1.5 rounded-md bg-white/[0.04] text-slate-400 transition-transform duration-200 cursor-pointer ${isExpanded ? 'rotate-180 text-white' : ''}`}
                         >
-                            <ChevronDown size={20} />
+                            <ChevronDown size={18} />
                         </div>
                     </div>
                 </div>
@@ -98,15 +117,15 @@ const SortableSectionItem = ({ section, idx, isExpanded, toggleSection, openDele
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3, ease: "circOut" }}
+                            transition={{ duration: 0.2 }}
                         >
-                            <div className="p-2 pb-6 px-6 border-t border-white/5 space-y-2.5">
+                            <div className="p-2 pb-5 px-5 border-t border-white/[0.04] space-y-2">
                                 {children}
                             </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
-            </motion.div>
+            </div>
         </div>
     );
 };
@@ -129,11 +148,10 @@ const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleT
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
-            <motion.div
-                layout
-                className={`group/problem relative flex items-center justify-between p-4 rounded-xl border transition-all duration-300 ${problem.isCompleted
-                    ? 'bg-green-500/5 border-green-500/20'
-                    : 'bg-[#18181b]/50 border-white/5 hover:bg-white/[0.03] hover:border-violet-500/20'
+            <div
+                className={`group/problem relative flex items-center justify-between p-3.5 rounded-lg border transition-colors ${problem.isCompleted
+                    ? 'bg-emerald-500/[0.04] border-emerald-500/15'
+                    : 'bg-white/[0.01] border-white/[0.04] hover:bg-white/[0.03] hover:border-violet-500/15'
                     }`}
             >
                 <div className="flex items-center gap-4 min-w-0 flex-1">
@@ -213,7 +231,7 @@ const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleT
                         </button>
                     )}
                 </div>
-            </motion.div>
+            </div>
         </div>
     );
 };
@@ -491,15 +509,18 @@ const CuratedListsPage = () => {
 
     const handleDragEnd = async (event) => {
         const { active, over } = event;
+        const draggedItem = activeItem;
         setActiveItem(null);
 
-        if (!over) return;
+        if (!over || !draggedItem) return;
 
         // Section Reorder
-        if (activeItem?.type === 'section') {
+        if (draggedItem.type === 'section') {
             if (active.id !== over.id) {
                 const oldIndex = list.sections.findIndex(s => s._id === active.id);
                 const newIndex = list.sections.findIndex(s => s._id === over.id);
+
+                if (oldIndex === -1 || newIndex === -1) return;
 
                 // Optimistic
                 const newSections = arrayMove(list.sections, oldIndex, newIndex);
@@ -508,8 +529,47 @@ const CuratedListsPage = () => {
                 try {
                     await listService.reorderSection(currentListId, oldIndex, newIndex);
                 } catch (err) {
-                    console.error("Reorder failed", err);
-                    // Revert on error
+                    console.error("Section reorder failed", err);
+                    const updated = await listService.getListByName(list.name);
+                    setList(updated);
+                }
+            }
+        }
+        // Problem Reorder within a section
+        else if (draggedItem.type === 'problem') {
+            if (active.id !== over.id) {
+                // Find which section contains these problems
+                let targetSection = null;
+                for (const s of list.sections) {
+                    const hasActive = s.problems.some(p => p._id === active.id);
+                    const hasOver = s.problems.some(p => p._id === over.id);
+                    if (hasActive && hasOver) {
+                        targetSection = s;
+                        break;
+                    }
+                }
+
+                if (!targetSection) return;
+
+                const oldIndex = targetSection.problems.findIndex(p => p._id === active.id);
+                const newIndex = targetSection.problems.findIndex(p => p._id === over.id);
+
+                if (oldIndex === -1 || newIndex === -1) return;
+
+                // Optimistic update
+                const newProblems = arrayMove(targetSection.problems, oldIndex, newIndex);
+                const updatedSections = list.sections.map(s => {
+                    if (s._id === targetSection._id) {
+                        return { ...s, problems: newProblems };
+                    }
+                    return s;
+                });
+                setList({ ...list, sections: updatedSections });
+
+                try {
+                    await listService.reorderProblem(currentListId, targetSection._id, oldIndex, newIndex);
+                } catch (err) {
+                    console.error("Problem reorder failed", err);
                     const updated = await listService.getListByName(list.name);
                     setList(updated);
                 }
@@ -583,15 +643,15 @@ const CuratedListsPage = () => {
                 </div>
 
                 <div className="max-w-7xl mx-auto relative z-10">
-                    <div className="text-center mb-16">
-                        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="inline-block">
-                            <h1 className="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-slate-400 mb-6 tracking-tight drop-shadow-2xl">
+                    <div className="text-center mb-12">
+                        <div className="inline-block">
+                            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
                                 Curated Sheets
                             </h1>
                             <p className="text-slate-400 text-lg max-w-2xl mx-auto">
                                 Select a roadmap to start your mastery journey. From community favorites to custom lists.
                             </p>
-                        </motion.div>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -602,9 +662,9 @@ const CuratedListsPage = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.1 }}
                                 onClick={() => handleSelectList(l.name)}
-                                className="group relative bg-[#0e0e12]/60 border border-white/5 hover:border-violet-500/50 rounded-3xl p-8 cursor-pointer overflow-hidden backdrop-blur-sm transition-all duration-300 hover:shadow-2xl hover:shadow-violet-900/20 hover:-translate-y-2"
+                                className="group relative bg-[#111113] border border-white/[0.06] hover:border-violet-500/20 rounded-xl p-7 cursor-pointer overflow-hidden transition-colors"
                             >
-                                <div className="absolute inset-0 bg-gradient-to-br from-violet-600/5 to-fuchsia-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
 
                                 <div className="relative z-10">
                                     <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
@@ -665,7 +725,7 @@ const CuratedListsPage = () => {
 
             <div className="max-w-6xl mx-auto relative z-10">
                 {/* Header with Back Button */}
-                <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 text-center relative">
+                <div className="mb-10 text-center relative">
                     <button
                         onClick={handleBackToDashboard}
                         className="absolute left-0 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all flex items-center gap-2 group"
@@ -678,30 +738,30 @@ const CuratedListsPage = () => {
                         <Sparkles size={14} className="text-yellow-300" />
                         <span className="text-xs font-semibold text-slate-200 tracking-widest uppercase">Official DSA Curriculum</span>
                     </div>
-                    <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-slate-400 mb-2 tracking-tight drop-shadow-2xl">
+                    <h1 className="text-3xl md:text-5xl font-bold text-white mb-2 tracking-tight">
                         {list.name}
                     </h1>
-                </motion.div>
+                </div>
 
                 {/* Progress Bar */}
-                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative bg-gradient-to-b from-[#1a103c]/80 to-[#0a0a0b]/90 border border-white/10 p-8 rounded-3xl mb-16 shadow-[0_0_40px_rgba(139,92,246,0.15)] backdrop-blur-xl overflow-hidden">
-                    <div className="flex flex-col md:flex-row justify-between items-end mb-6 relative z-10">
+                <div className="bg-[#111113] border border-white/[0.06] p-6 rounded-xl mb-10">
+                    <div className="flex flex-col md:flex-row justify-between items-end mb-5">
                         <div>
-                            <div className="flex items-center gap-3 text-slate-300 mb-3">
-                                <Trophy className="text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]" size={20} />
-                                <span className="font-bold tracking-wide uppercase text-sm text-violet-200">Total Mastery</span>
+                            <div className="flex items-center gap-2 text-slate-300 mb-2">
+                                <Trophy className="text-amber-400" size={18} />
+                                <span className="font-semibold tracking-wide uppercase text-xs text-slate-400">Total Mastery</span>
                             </div>
-                            <div className="text-5xl font-extrabold text-white tracking-tight flex items-baseline gap-2">
-                                <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">{solved}</span>
-                                <span className="text-2xl text-slate-600 font-medium">/ {total} Problems</span>
+                            <div className="text-4xl font-bold text-white tracking-tight flex items-baseline gap-2">
+                                {solved}
+                                <span className="text-xl text-slate-600 font-medium">/ {total} Problems</span>
                             </div>
                         </div>
-                        <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-white drop-shadow-lg">{progress}%</div>
+                        <div className="text-4xl font-bold text-violet-400">{progress}%</div>
                     </div>
-                    <div className="h-5 w-full bg-slate-800/50 rounded-full overflow-hidden relative shadow-inner">
-                        <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 1.5, ease: "circOut" }} className="h-full relative bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-500" />
+                    <div className="h-3 w-full bg-white/[0.04] rounded-full overflow-hidden">
+                        <div style={{ width: `${progress}%` }} className="h-full bg-violet-500 rounded-full transition-all duration-700" />
                     </div>
-                </motion.div>
+                </div>
 
                 {/* Controls */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
