@@ -331,7 +331,7 @@ const ProblemsPage = () => {
     );
 
     const stats = {
-        total: showSource === 'company' ? filteredProblems.length : totalCount, // Use server total for user/all
+        total: filteredProblems.length,
         solved: filteredProblems.filter(p => p.isSolved).length,
         revised: filteredProblems.reduce((sum, p) => sum + (p.revision_count || 0), 0)
     };
