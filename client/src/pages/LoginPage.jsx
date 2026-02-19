@@ -48,7 +48,7 @@ const LoginPage = () => {
             </div>
 
             {/* Grid pattern overlay */}
-            <div className="absolute inset-0 -z-5 opacity-[0.02]" style={{ backgroundImage: 'linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)', backgroundSize: '50px 50px' }}></div>
+            <div className="absolute inset-0 -z-10 pointer-events-none opacity-[0.02]" style={{ backgroundImage: 'linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)', backgroundSize: '50px 50px' }}></div>
 
             <motion.div
                 initial={{ opacity: 0, y: 30 }}
