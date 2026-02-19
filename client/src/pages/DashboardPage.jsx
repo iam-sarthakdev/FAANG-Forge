@@ -143,7 +143,7 @@ const DashboardPage = () => {
                         </div>
                     </div>
                     <h3 className="text-3xl font-bold text-white mb-0.5">
-                        {analytics?.revision_streak || 28}<span className="text-sm text-slate-600 font-normal ml-1.5">days</span>
+                        {analytics?.revision_streak ?? 0}<span className="text-sm text-slate-600 font-normal ml-1.5">days</span>
                     </h3>
                     <p className="text-slate-500 text-xs font-medium uppercase tracking-wide">Current Streak</p>
                 </div>

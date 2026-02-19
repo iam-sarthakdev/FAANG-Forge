@@ -97,7 +97,7 @@ const AnalyticsPage = () => {
                         <span className="text-amber-300/80 font-semibold uppercase text-[10px] tracking-wider">Current Streak</span>
                     </div>
                     <div className="text-2xl font-bold text-white">
-                        {analytics.revision_streak || 28} <span className="text-xs font-medium text-slate-500">DAYS</span>
+                        {analytics?.revision_streak ?? 0} <span className="text-xs font-medium text-slate-500">DAYS</span>
                     </div>
                 </div>
             </div>
@@ -116,9 +116,9 @@ const AnalyticsPage = () => {
                     >
                         <div className="flex justify-between items-start mb-4">
                             <div className={`p-2.5 rounded-lg ${stat.color === 'violet' ? 'bg-violet-500/10 text-violet-400' :
-                                    stat.color === 'emerald' ? 'bg-emerald-500/10 text-emerald-400' :
-                                        stat.color === 'blue' ? 'bg-blue-500/10 text-blue-400' :
-                                            'bg-amber-500/10 text-amber-400'
+                                stat.color === 'emerald' ? 'bg-emerald-500/10 text-emerald-400' :
+                                    stat.color === 'blue' ? 'bg-blue-500/10 text-blue-400' :
+                                        'bg-amber-500/10 text-amber-400'
                                 }`}>
                                 <stat.icon size={20} />
                             </div>

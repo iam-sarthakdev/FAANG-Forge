@@ -1,4 +1,4 @@
-import { Problem, Revision, ProblemList } from '../models/index.js';
+import { Problem, Revision, ProblemList, UserListProgress } from '../models/index.js';
 
 // Get analytics data
 export const getAnalytics = async (req, res, next) => {
@@ -97,29 +97,43 @@ export const getAnalytics = async (req, res, next) => {
             .sort({ revised_at: -1 })
             .select('revised_at');
 
-        // Also gather activity from ProblemList completions and revisions
-        // Fetch all lists and compute list-level stats
-        const lists = await ProblemList.find({});
+        // Also gather activity from ProblemList completions and revisions (per-user)
+        const userProgressDocs = await UserListProgress.find({ user_id: userId });
         let listSolvedCount = 0;
         let listRevisionCount = 0;
         let listRevisedProblems = [];
 
-        lists.forEach(list => {
+        // For each user progress doc, look up the list to get problem titles
+        for (const upDoc of userProgressDocs) {
+            const list = await ProblemList.findById(upDoc.list_id).select('sections');
+            if (!list) continue;
+
+            // Build a quick lookup map: problemId -> { title, sectionTitle }
+            const problemMap = new Map();
             list.sections.forEach(section => {
                 section.problems.forEach(problem => {
-                    if (problem.isCompleted) listSolvedCount++;
-                    if (problem.revision_count > 0) {
-                        listRevisionCount += problem.revision_count;
-                        listRevisedProblems.push({
-                            id: problem._id,
-                            title: problem.title,
-                            revision_count: problem.revision_count,
-                            sectionTitle: section.title
-                        });
-                    }
+                    problemMap.set(problem._id.toString(), {
+                        title: problem.title,
+                        sectionTitle: section.title
+                    });
                 });
             });
-        });
+
+            // Iterate over user's progress entries
+            for (const [pid, prog] of upDoc.progress) {
+                if (prog.isCompleted) listSolvedCount++;
+                if (prog.revision_count > 0) {
+                    listRevisionCount += prog.revision_count;
+                    const info = problemMap.get(pid);
+                    listRevisedProblems.push({
+                        id: pid,
+                        title: info ? info.title : 'Unknown',
+                        revision_count: prog.revision_count,
+                        sectionTitle: info ? info.sectionTitle : ''
+                    });
+                }
+            }
+        }
 
         // Merge most revised: combine Revision-model data with list-level revision data
         const combinedMostRevised = [...mostRevised];
@@ -172,9 +186,6 @@ export const getAnalytics = async (req, res, next) => {
                 }
             }
         }
-
-        // Ensure minimum streak of 28 (user's actual streak from consistent use)
-        if (streak < 28) streak = 28;
 
         // Weekly activity - daily problems solved + revised for last 7 days
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];

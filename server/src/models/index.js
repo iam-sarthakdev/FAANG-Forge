@@ -122,3 +122,4 @@ export const Problem = mongoose.model('Problem', problemSchema);
 export const Revision = mongoose.model('Revision', revisionSchema);
 export { default as ProblemList } from './ProblemList.js';
 export { default as User } from './User.js';
+export { default as UserListProgress } from './UserListProgress.js';

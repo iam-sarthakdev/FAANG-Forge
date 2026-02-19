@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ProblemList, Revision, User, Problem } from '../models/index.js';
+import { ProblemList, Revision, User, Problem, UserListProgress } from '../models/index.js';
 
 const checkAdmin = async (userId) => {
     const user = await User.findById(userId);
@@ -28,7 +28,41 @@ export const getListByName = async (req, res) => {
             });
 
         if (!list) return res.status(404).json({ message: 'List not found' });
-        res.status(200).json(list);
+
+        // Merge per-user progress into the response
+        const userId = req.user?.userId;
+        let userProgress = null;
+        if (userId) {
+            userProgress = await UserListProgress.findOne({ user_id: userId, list_id: list._id });
+        }
+
+        const listObj = list.toObject();
+        if (userProgress) {
+            listObj.sections = listObj.sections.map(section => ({
+                ...section,
+                problems: section.problems.map(problem => {
+                    const pid = problem._id.toString();
+                    const prog = userProgress.progress.get(pid);
+                    return {
+                        ...problem,
+                        isCompleted: prog ? prog.isCompleted : false,
+                        revision_count: prog ? prog.revision_count : 0
+                    };
+                })
+            }));
+        } else {
+            // No progress document yet — new user, everything is 0/false
+            listObj.sections = listObj.sections.map(section => ({
+                ...section,
+                problems: section.problems.map(problem => ({
+                    ...problem,
+                    isCompleted: false,
+                    revision_count: 0
+                }))
+            }));
+        }
+
+        res.status(200).json(listObj);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -164,6 +198,7 @@ export const deleteProblem = async (req, res) => {
 
 export const toggleProblemCompletion = async (req, res) => {
     const { listId, sectionId, problemId } = req.params;
+    const userId = req.user.userId;
 
     try {
         const list = await ProblemList.findById(listId);
@@ -175,15 +210,26 @@ export const toggleProblemCompletion = async (req, res) => {
         const problem = section.problems.id(problemId);
         if (!problem) return res.status(404).json({ message: 'Problem not found' });
 
-        problem.isCompleted = !problem.isCompleted;
-        await list.save();
+        // Get or create user progress for this list
+        let userProgress = await UserListProgress.findOne({ user_id: userId, list_id: listId });
+        if (!userProgress) {
+            userProgress = await UserListProgress.create({ user_id: userId, list_id: listId, progress: new Map() });
+        }
+
+        const pid = problemId.toString();
+        const current = userProgress.progress.get(pid) || { isCompleted: false, revision_count: 0 };
+        const newCompleted = !current.isCompleted;
+
+        userProgress.progress.set(pid, { isCompleted: newCompleted, revision_count: current.revision_count });
+        userProgress.markModified('progress');
+        await userProgress.save();
 
         // Track activity for streak — create a Revision entry when marking as completed
-        if (problem.isCompleted) {
+        if (newCompleted) {
             try {
                 const refId = problem.problemRef || problem._id;
                 await Revision.create({
-                    user_id: req.user.userId,
+                    user_id: userId,
                     problem_id: refId,
                     notes: `Completed: ${problem.title}`
                 });
@@ -192,7 +238,22 @@ export const toggleProblemCompletion = async (req, res) => {
             }
         }
 
-        res.status(200).json(list);
+        // Return the list with user-specific progress merged in
+        const listObj = list.toObject();
+        listObj.sections = listObj.sections.map(s => ({
+            ...s,
+            problems: s.problems.map(p => {
+                const ppid = p._id.toString();
+                const prog = userProgress.progress.get(ppid);
+                return {
+                    ...p,
+                    isCompleted: prog ? prog.isCompleted : false,
+                    revision_count: prog ? prog.revision_count : 0
+                };
+            })
+        }));
+
+        res.status(200).json(listObj);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -200,6 +261,7 @@ export const toggleProblemCompletion = async (req, res) => {
 
 export const incrementProblemRevision = async (req, res) => {
     const { listId, sectionId, problemId } = req.params;
+    const userId = req.user.userId;
 
     try {
         const list = await ProblemList.findById(listId);
@@ -211,17 +273,24 @@ export const incrementProblemRevision = async (req, res) => {
         const problem = section.problems.id(problemId);
         if (!problem) return res.status(404).json({ message: 'Problem not found' });
 
-        problem.revision_count = (problem.revision_count || 0) + 1;
+        // Get or create user progress for this list
+        let userProgress = await UserListProgress.findOne({ user_id: userId, list_id: listId });
+        if (!userProgress) {
+            userProgress = await UserListProgress.create({ user_id: userId, list_id: listId, progress: new Map() });
+        }
 
-        // Mark as modified to ensure persistence
-        list.markModified('sections');
-        await list.save();
+        const pid = problemId.toString();
+        const current = userProgress.progress.get(pid) || { isCompleted: false, revision_count: 0 };
+
+        userProgress.progress.set(pid, { isCompleted: current.isCompleted, revision_count: current.revision_count + 1 });
+        userProgress.markModified('progress');
+        await userProgress.save();
 
         // Always create a Revision entry for activity tracking (streak, analytics)
         try {
             const refId = problem.problemRef || problem._id;
             await Revision.create({
-                user_id: req.user.userId,
+                user_id: userId,
                 problem_id: refId,
                 notes: `Revised: ${problem.title}`
             });
@@ -229,7 +298,22 @@ export const incrementProblemRevision = async (req, res) => {
             console.warn('Failed to track revision activity:', err.message);
         }
 
-        res.status(200).json(list);
+        // Return the list with user-specific progress merged in
+        const listObj = list.toObject();
+        listObj.sections = listObj.sections.map(s => ({
+            ...s,
+            problems: s.problems.map(p => {
+                const ppid = p._id.toString();
+                const prog = userProgress.progress.get(ppid);
+                return {
+                    ...p,
+                    isCompleted: prog ? prog.isCompleted : false,
+                    revision_count: prog ? prog.revision_count : 0
+                };
+            })
+        }));
+
+        res.status(200).json(listObj);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
