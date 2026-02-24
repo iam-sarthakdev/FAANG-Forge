@@ -221,10 +221,10 @@ export const toggleProblemCompletion = async (req, res) => {
         }
 
         const pid = problemId.toString();
-        const current = userProgress.progress.get(pid) || { isCompleted: false, revision_count: 0 };
+        const current = userProgress.progress.get(pid) || { isCompleted: false, revision_count: 0, code: '', language: 'cpp' };
         const newCompleted = !current.isCompleted;
 
-        userProgress.progress.set(pid, { isCompleted: newCompleted, revision_count: current.revision_count });
+        userProgress.progress.set(pid, { isCompleted: newCompleted, revision_count: current.revision_count, code: current.code || '', language: current.language || 'cpp' });
         userProgress.markModified('progress');
         await userProgress.save();
 
@@ -252,7 +252,9 @@ export const toggleProblemCompletion = async (req, res) => {
                 return {
                     ...p,
                     isCompleted: prog ? prog.isCompleted : false,
-                    revision_count: prog ? prog.revision_count : 0
+                    revision_count: prog ? prog.revision_count : 0,
+                    code: prog?.code || '',
+                    language: prog?.language || 'cpp'
                 };
             })
         }));
@@ -284,9 +286,9 @@ export const incrementProblemRevision = async (req, res) => {
         }
 
         const pid = problemId.toString();
-        const current = userProgress.progress.get(pid) || { isCompleted: false, revision_count: 0 };
+        const current = userProgress.progress.get(pid) || { isCompleted: false, revision_count: 0, code: '', language: 'cpp' };
 
-        userProgress.progress.set(pid, { isCompleted: current.isCompleted, revision_count: current.revision_count + 1 });
+        userProgress.progress.set(pid, { isCompleted: current.isCompleted, revision_count: current.revision_count + 1, code: current.code || '', language: current.language || 'cpp' });
         userProgress.markModified('progress');
         await userProgress.save();
 
@@ -312,7 +314,9 @@ export const incrementProblemRevision = async (req, res) => {
                 return {
                     ...p,
                     isCompleted: prog ? prog.isCompleted : false,
-                    revision_count: prog ? prog.revision_count : 0
+                    revision_count: prog ? prog.revision_count : 0,
+                    code: prog?.code || '',
+                    language: prog?.language || 'cpp'
                 };
             })
         }));
