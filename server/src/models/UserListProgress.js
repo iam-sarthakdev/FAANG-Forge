@@ -23,7 +23,9 @@ const userListProgressSchema = new Schema({
         type: Map,
         of: new Schema({
             isCompleted: { type: Boolean, default: false },
-            revision_count: { type: Number, default: 0 }
+            revision_count: { type: Number, default: 0 },
+            code: { type: String, default: '' },
+            language: { type: String, default: 'cpp' }
         }, { _id: false }),
         default: () => new Map()
     }

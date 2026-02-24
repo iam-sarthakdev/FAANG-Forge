@@ -86,7 +86,20 @@ const listService = {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         return response.data;
+    },
+    updateCompanyTags: async (listId, sectionId, problemId, companyTags) => {
+        const response = await axios.patch(`${API_URL}/lists/${listId}/sections/${sectionId}/problems/${problemId}/company-tags`, { companyTags }, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        return response.data;
+    },
+    saveCode: async (listId, sectionId, problemId, code, language) => {
+        const response = await axios.patch(`${API_URL}/lists/${listId}/sections/${sectionId}/problems/${problemId}/code`, { code, language }, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        return response.data;
     }
 };
 
 export default listService;
+

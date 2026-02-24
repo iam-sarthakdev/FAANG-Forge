@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ChevronDown, CheckCircle, Circle,
     ExternalLink, Plus, Trophy, Layers, Trash2, Github, Globe, Sparkles,
-    Lock, ArrowUp, ArrowDown, RefreshCw, ArrowUpDown, GripVertical
+    Lock, ArrowUp, ArrowDown, RefreshCw, ArrowUpDown, GripVertical,
+    Code2, Tag, X, Save, Building2
 } from 'lucide-react';
 import { markAsRevised } from '../services/api';
 import {
@@ -130,7 +131,7 @@ const SortableSectionItem = ({ section, idx, isExpanded, toggleSection, openDele
     );
 };
 
-const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleToggleCompletion, handleIncrementRevision, isAdmin }) => {
+const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleToggleCompletion, handleIncrementRevision, isAdmin, onOpenCompanyTags, onToggleCodeDrawer, codeDrawerOpen }) => {
     const {
         attributes,
         listeners,
@@ -170,7 +171,7 @@ const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleT
                             : <Circle size={24} strokeWidth={1.5} />
                         }
                     </button>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                         <a
                             href={problem.url}
                             target="_blank"
@@ -179,7 +180,7 @@ const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleT
                         >
                             {problem.title}
                         </a>
-                        <div className="flex gap-2 mt-2 items-center">
+                        <div className="flex gap-2 mt-2 items-center flex-wrap">
                             {/* Revision Count */}
                             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-medium">
                                 <RefreshCw size={12} />
@@ -204,6 +205,25 @@ const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleT
                                 {problem.platform}
                             </span>
 
+                            {/* Company Tags */}
+                            {problem.companyTags && problem.companyTags.length > 0 && problem.companyTags.map((tag, i) => (
+                                <span key={i} className="text-[10px] font-medium px-2 py-1 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center gap-1">
+                                    <Building2 size={10} />
+                                    {tag}
+                                </span>
+                            ))}
+
+                            {/* Add Company Tag (admin only) */}
+                            {isAdmin && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onOpenCompanyTags(sectionId, problem._id, problem.companyTags || []); }}
+                                    className="text-[10px] font-medium px-2 py-1 rounded-md bg-white/[0.03] text-slate-500 border border-dashed border-white/10 hover:text-cyan-400 hover:border-cyan-500/30 hover:bg-cyan-500/5 transition-colors flex items-center gap-1"
+                                >
+                                    <Tag size={10} />
+                                    <Plus size={8} strokeWidth={3} />
+                                </button>
+                            )}
+
                             {(problem.problemRef?.revision_count > 0) && (
                                 <span className="text-[10px] font-medium px-2.5 py-1 rounded-md bg-blue-900/20 text-blue-400 border border-blue-500/20 flex items-center gap-1">
                                     <RefreshCw size={10} />
@@ -213,23 +233,36 @@ const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleT
                         </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 opacity-0 group-hover/problem:opacity-100 transition-opacity duration-200">
-                    <a
-                        href={problem.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 text-slate-500 hover:text-white bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                <div className="flex items-center gap-2">
+                    {/* Code toggle button - always visible */}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onToggleCodeDrawer(sectionId, problem._id); }}
+                        className={`p-2 rounded-lg transition-colors ${codeDrawerOpen
+                            ? 'text-violet-400 bg-violet-500/10 border border-violet-500/20'
+                            : problem.code ? 'text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20' : 'text-slate-500 bg-white/5 hover:text-white hover:bg-white/10'
+                            }`}
+                        title={problem.code ? 'View/Edit Code' : 'Add Code'}
                     >
-                        <ExternalLink size={16} />
-                    </a>
-                    {isAdmin && (
-                        <button
-                            onClick={(e) => { e.stopPropagation(); openDeleteModal('problem', sectionId, problem._id); }}
-                            className="p-2 text-slate-500 hover:text-red-400 bg-white/5 rounded-lg hover:bg-red-500/10 transition-colors"
+                        <Code2 size={16} />
+                    </button>
+                    <div className="flex items-center gap-2 opacity-0 group-hover/problem:opacity-100 transition-opacity duration-200">
+                        <a
+                            href={problem.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 text-slate-500 hover:text-white bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
                         >
-                            <Trash2 size={16} />
-                        </button>
-                    )}
+                            <ExternalLink size={16} />
+                        </a>
+                        {isAdmin && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); openDeleteModal('problem', sectionId, problem._id); }}
+                                className="p-2 text-slate-500 hover:text-red-400 bg-white/5 rounded-lg hover:bg-red-500/10 transition-colors"
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
@@ -266,6 +299,16 @@ const CuratedListsPage = () => {
 
     // Sorting
     const [sortMode, setSortMode] = useState('default'); // 'default', 'easy-hard', 'hard-easy', 'revisions-desc'
+
+    // Company Tags Modal
+    const [companyTagsModal, setCompanyTagsModal] = useState({ open: false, sectionId: null, problemId: null, tags: [] });
+    const [newTagInput, setNewTagInput] = useState('');
+
+    // Code Drawer
+    const [codeDrawer, setCodeDrawer] = useState({ sectionId: null, problemId: null });
+    const [codeInput, setCodeInput] = useState('');
+    const [codeLang, setCodeLang] = useState('cpp');
+    const [codeSaving, setCodeSaving] = useState(false);
 
     useEffect(() => {
         fetchAllLists();
@@ -486,6 +529,95 @@ const CuratedListsPage = () => {
         }
     };
 
+    // --- Company Tags Handlers ---
+    const onOpenCompanyTags = (sectionId, problemId, existingTags) => {
+        setCompanyTagsModal({ open: true, sectionId, problemId, tags: [...(existingTags || [])] });
+        setNewTagInput('');
+    };
+
+    const handleAddTag = () => {
+        const tag = newTagInput.trim();
+        if (!tag || companyTagsModal.tags.includes(tag)) return;
+        setCompanyTagsModal(prev => ({ ...prev, tags: [...prev.tags, tag] }));
+        setNewTagInput('');
+    };
+
+    const handleRemoveTag = (tagToRemove) => {
+        setCompanyTagsModal(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tagToRemove) }));
+    };
+
+    const handleSaveCompanyTags = async () => {
+        if (!currentListId || !companyTagsModal.sectionId || !companyTagsModal.problemId) return;
+        setSubmitting(true);
+        try {
+            await listService.updateCompanyTags(currentListId, companyTagsModal.sectionId, companyTagsModal.problemId, companyTagsModal.tags);
+            // Optimistic update
+            setList(prev => ({
+                ...prev,
+                sections: prev.sections.map(s => {
+                    if (s._id === companyTagsModal.sectionId) {
+                        return {
+                            ...s,
+                            problems: s.problems.map(p => {
+                                if (p._id === companyTagsModal.problemId) return { ...p, companyTags: companyTagsModal.tags };
+                                return p;
+                            })
+                        };
+                    }
+                    return s;
+                })
+            }));
+            setCompanyTagsModal({ open: false, sectionId: null, problemId: null, tags: [] });
+        } catch (err) {
+            console.error(err);
+            alert('Failed to update company tags');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // --- Code Drawer Handlers ---
+    const onToggleCodeDrawer = (sectionId, problemId) => {
+        if (codeDrawer.sectionId === sectionId && codeDrawer.problemId === problemId) {
+            setCodeDrawer({ sectionId: null, problemId: null });
+            return;
+        }
+        // Find the problem data to load existing code
+        const section = list.sections.find(s => s._id === sectionId);
+        const problem = section?.problems.find(p => p._id === problemId);
+        setCodeInput(problem?.code || '');
+        setCodeLang(problem?.language || 'cpp');
+        setCodeDrawer({ sectionId, problemId });
+    };
+
+    const handleSaveCode = async () => {
+        if (!currentListId || !codeDrawer.sectionId || !codeDrawer.problemId) return;
+        setCodeSaving(true);
+        try {
+            await listService.saveCode(currentListId, codeDrawer.sectionId, codeDrawer.problemId, codeInput, codeLang);
+            // Optimistic update
+            setList(prev => ({
+                ...prev,
+                sections: prev.sections.map(s => {
+                    if (s._id === codeDrawer.sectionId) {
+                        return {
+                            ...s,
+                            problems: s.problems.map(p => {
+                                if (p._id === codeDrawer.problemId) return { ...p, code: codeInput, language: codeLang };
+                                return p;
+                            })
+                        };
+                    }
+                    return s;
+                })
+            }));
+        } catch (err) {
+            console.error(err);
+            alert('Failed to save code');
+        } finally {
+            setCodeSaving(false);
+        }
+    };
 
     // --- Drag and Drop Handlers ---
     const [activeItem, setActiveItem] = useState(null);
@@ -716,6 +848,20 @@ const CuratedListsPage = () => {
     }));
     const progress = total === 0 ? 0 : Math.round((solved / total) * 100);
 
+    // Difficulty breakdown stats
+    const diffStats = useMemo(() => {
+        const stats = { Easy: { solved: 0, total: 0 }, Medium: { solved: 0, total: 0 }, Hard: { solved: 0, total: 0 } };
+        if (!list?.sections) return stats;
+        list.sections.forEach(s => s.problems.forEach(p => {
+            const d = p.difficulty;
+            if (stats[d]) {
+                stats[d].total++;
+                if (p.isCompleted) stats[d].solved++;
+            }
+        }));
+        return stats;
+    }, [list]);
+
     return (
         <div className="min-h-screen bg-[#030014] text-white p-6 md:p-12 font-sans selection:bg-fuchsia-500/30 overflow-hidden relative">
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -758,8 +904,42 @@ const CuratedListsPage = () => {
                         </div>
                         <div className="text-4xl font-bold text-violet-400">{progress}%</div>
                     </div>
-                    <div className="h-3 w-full bg-white/[0.04] rounded-full overflow-hidden">
+                    <div className="h-3 w-full bg-white/[0.04] rounded-full overflow-hidden mb-6">
                         <div style={{ width: `${progress}%` }} className="h-full bg-violet-500 rounded-full transition-all duration-700" />
+                    </div>
+
+                    {/* Difficulty Breakdown */}
+                    <div className="grid grid-cols-3 gap-4">
+                        {/* Easy */}
+                        <div className="bg-green-500/[0.06] border border-green-500/15 rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-bold uppercase tracking-wider text-green-400">Easy</span>
+                                <span className="text-sm font-bold text-green-400">{diffStats.Easy.solved}/{diffStats.Easy.total}</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-green-900/30 rounded-full overflow-hidden">
+                                <div style={{ width: diffStats.Easy.total > 0 ? `${(diffStats.Easy.solved / diffStats.Easy.total) * 100}%` : '0%' }} className="h-full bg-green-500 rounded-full transition-all duration-500" />
+                            </div>
+                        </div>
+                        {/* Medium */}
+                        <div className="bg-yellow-500/[0.06] border border-yellow-500/15 rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-bold uppercase tracking-wider text-yellow-400">Medium</span>
+                                <span className="text-sm font-bold text-yellow-400">{diffStats.Medium.solved}/{diffStats.Medium.total}</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-yellow-900/30 rounded-full overflow-hidden">
+                                <div style={{ width: diffStats.Medium.total > 0 ? `${(diffStats.Medium.solved / diffStats.Medium.total) * 100}%` : '0%' }} className="h-full bg-yellow-500 rounded-full transition-all duration-500" />
+                            </div>
+                        </div>
+                        {/* Hard */}
+                        <div className="bg-red-500/[0.06] border border-red-500/15 rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-bold uppercase tracking-wider text-red-400">Hard</span>
+                                <span className="text-sm font-bold text-red-400">{diffStats.Hard.solved}/{diffStats.Hard.total}</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-red-900/30 rounded-full overflow-hidden">
+                                <div style={{ width: diffStats.Hard.total > 0 ? `${(diffStats.Hard.solved / diffStats.Hard.total) * 100}%` : '0%' }} className="h-full bg-red-500 rounded-full transition-all duration-500" />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -834,16 +1014,68 @@ const CuratedListsPage = () => {
                                             disabled={sortMode !== 'default' || !isAdmin}
                                         >
                                             {section.problems.map((problem, pIdx) => (
-                                                <SortableProblemItem
-                                                    key={problem._id}
-                                                    problem={problem}
-                                                    sectionId={section._id}
-                                                    idx={pIdx}
-                                                    openDeleteModal={openDeleteModal}
-                                                    handleToggleCompletion={handleToggleCompletion}
-                                                    handleIncrementRevision={handleIncrementRevision}
-                                                    isAdmin={isAdmin}
-                                                />
+                                                <React.Fragment key={problem._id}>
+                                                    <SortableProblemItem
+                                                        problem={problem}
+                                                        sectionId={section._id}
+                                                        idx={pIdx}
+                                                        openDeleteModal={openDeleteModal}
+                                                        handleToggleCompletion={handleToggleCompletion}
+                                                        handleIncrementRevision={handleIncrementRevision}
+                                                        isAdmin={isAdmin}
+                                                        onOpenCompanyTags={onOpenCompanyTags}
+                                                        onToggleCodeDrawer={onToggleCodeDrawer}
+                                                        codeDrawerOpen={codeDrawer.sectionId === section._id && codeDrawer.problemId === problem._id}
+                                                    />
+                                                    {/* Code Drawer */}
+                                                    <AnimatePresence>
+                                                        {codeDrawer.sectionId === section._id && codeDrawer.problemId === problem._id && (
+                                                            <motion.div
+                                                                initial={{ height: 0, opacity: 0 }}
+                                                                animate={{ height: 'auto', opacity: 1 }}
+                                                                exit={{ height: 0, opacity: 0 }}
+                                                                transition={{ duration: 0.2 }}
+                                                                className="overflow-hidden"
+                                                            >
+                                                                <div className="ml-12 mt-1 mb-2 p-4 rounded-xl bg-[#0a0a0f] border border-white/[0.06]">
+                                                                    <div className="flex items-center justify-between mb-3">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <Code2 size={14} className="text-violet-400" />
+                                                                            <span className="text-xs font-semibold text-slate-300">Solution Code</span>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <select
+                                                                                value={codeLang}
+                                                                                onChange={(e) => setCodeLang(e.target.value)}
+                                                                                className="text-xs bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-slate-300 outline-none appearance-none cursor-pointer"
+                                                                            >
+                                                                                <option value="cpp">C++</option>
+                                                                                <option value="java">Java</option>
+                                                                                <option value="python">Python</option>
+                                                                                <option value="javascript">JavaScript</option>
+                                                                            </select>
+                                                                            <button
+                                                                                onClick={handleSaveCode}
+                                                                                disabled={codeSaving}
+                                                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold transition-colors disabled:opacity-50"
+                                                                            >
+                                                                                <Save size={12} />
+                                                                                {codeSaving ? 'Saving...' : 'Save'}
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <textarea
+                                                                        value={codeInput}
+                                                                        onChange={(e) => setCodeInput(e.target.value)}
+                                                                        placeholder="Paste your solution code here for quick revision..."
+                                                                        className="w-full min-h-[200px] bg-black/50 border border-white/[0.06] rounded-xl p-4 text-sm font-mono text-slate-200 placeholder-slate-600 outline-none resize-y focus:border-violet-500/30 transition-colors"
+                                                                        spellCheck="false"
+                                                                    />
+                                                                </div>
+                                                            </motion.div>
+                                                        )}
+                                                    </AnimatePresence>
+                                                </React.Fragment>
                                             ))}
                                         </SortableContext>
                                     )}
@@ -966,6 +1198,57 @@ const CuratedListsPage = () => {
                             <div className="flex gap-3">
                                 <button onClick={() => setDeleteModal({ open: false, type: null, sectionId: null, problemId: null })} className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-medium transition-colors">Cancel</button>
                                 <button onClick={confirmDelete} className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold shadow-lg shadow-red-600/20 transition-all">Delete</button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Company Tags Modal */}
+            <AnimatePresence>
+                {companyTagsModal.open && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={() => setCompanyTagsModal({ open: false, sectionId: null, problemId: null, tags: [] })} />
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-[#121214] border border-white/10 w-full max-w-md p-8 rounded-3xl shadow-2xl relative z-10">
+                            <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                                <Building2 size={22} className="text-cyan-400" />
+                                Company Tags
+                            </h3>
+                            <p className="text-sm text-slate-400 mb-6">Add companies that ask this problem</p>
+
+                            {/* Current Tags */}
+                            <div className="flex flex-wrap gap-2 mb-6 min-h-[40px]">
+                                {companyTagsModal.tags.length === 0 && (
+                                    <span className="text-slate-600 text-sm italic">No company tags yet</span>
+                                )}
+                                {companyTagsModal.tags.map((tag, i) => (
+                                    <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-sm font-medium">
+                                        {tag}
+                                        <button onClick={() => handleRemoveTag(tag)} className="hover:text-red-400 transition-colors">
+                                            <X size={14} />
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+
+                            {/* Add Tag Input */}
+                            <div className="flex gap-2 mb-8">
+                                <input
+                                    value={newTagInput}
+                                    onChange={(e) => setNewTagInput(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); } }}
+                                    placeholder="e.g. Google, Amazon, Meta..."
+                                    className="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-cyan-500/50 transition-colors"
+                                    autoFocus
+                                />
+                                <button onClick={handleAddTag} className="px-4 py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-sm transition-colors">
+                                    Add
+                                </button>
+                            </div>
+
+                            <div className="flex justify-end gap-3">
+                                <button onClick={() => setCompanyTagsModal({ open: false, sectionId: null, problemId: null, tags: [] })} className="px-5 py-2.5 rounded-xl text-slate-400 hover:text-white transition-colors text-sm font-medium">Cancel</button>
+                                <button onClick={handleSaveCompanyTags} disabled={submitting} className="px-8 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-sm transition-all">{submitting ? 'Saving...' : 'Save Tags'}</button>
                             </div>
                         </motion.div>
                     </div>

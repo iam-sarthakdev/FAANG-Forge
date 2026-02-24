@@ -46,7 +46,9 @@ export const getListByName = async (req, res) => {
                     return {
                         ...problem,
                         isCompleted: prog ? prog.isCompleted : false,
-                        revision_count: prog ? prog.revision_count : 0
+                        revision_count: prog ? prog.revision_count : 0,
+                        code: prog?.code || '',
+                        language: prog?.language || 'cpp'
                     };
                 })
             }));
@@ -57,7 +59,9 @@ export const getListByName = async (req, res) => {
                 problems: section.problems.map(problem => ({
                     ...problem,
                     isCompleted: false,
-                    revision_count: 0
+                    revision_count: 0,
+                    code: '',
+                    language: 'cpp'
                 }))
             }));
         }
@@ -319,7 +323,69 @@ export const incrementProblemRevision = async (req, res) => {
     }
 };
 
+export const updateCompanyTags = async (req, res) => {
+    const { listId, sectionId, problemId } = req.params;
+    const { companyTags } = req.body;
 
+    try {
+        await checkAdmin(req.user.userId);
+        const list = await ProblemList.findById(listId);
+        if (!list) return res.status(404).json({ message: 'List not found' });
+
+        const section = list.sections.id(sectionId);
+        if (!section) return res.status(404).json({ message: 'Section not found' });
+
+        const problem = section.problems.id(problemId);
+        if (!problem) return res.status(404).json({ message: 'Problem not found' });
+
+        problem.companyTags = companyTags || [];
+        list.markModified('sections');
+        await list.save();
+
+        res.status(200).json(list);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const saveCode = async (req, res) => {
+    const { listId, sectionId, problemId } = req.params;
+    const { code, language } = req.body;
+    const userId = req.user.userId;
+
+    try {
+        const list = await ProblemList.findById(listId);
+        if (!list) return res.status(404).json({ message: 'List not found' });
+
+        const section = list.sections.id(sectionId);
+        if (!section) return res.status(404).json({ message: 'Section not found' });
+
+        const problem = section.problems.id(problemId);
+        if (!problem) return res.status(404).json({ message: 'Problem not found' });
+
+        // Get or create user progress for this list
+        let userProgress = await UserListProgress.findOne({ user_id: userId, list_id: listId });
+        if (!userProgress) {
+            userProgress = await UserListProgress.create({ user_id: userId, list_id: listId, progress: new Map() });
+        }
+
+        const pid = problemId.toString();
+        const current = userProgress.progress.get(pid) || { isCompleted: false, revision_count: 0, code: '', language: 'cpp' };
+
+        userProgress.progress.set(pid, {
+            isCompleted: current.isCompleted,
+            revision_count: current.revision_count,
+            code: code !== undefined ? code : current.code,
+            language: language || current.language
+        });
+        userProgress.markModified('progress');
+        await userProgress.save();
+
+        res.status(200).json({ message: 'Code saved successfully', code, language: language || current.language });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 // Hardcoded list data for seeding
 const sarthaksList = {

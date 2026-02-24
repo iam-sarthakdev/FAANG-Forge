@@ -42,6 +42,10 @@ const problemListSchema = new Schema({
                 enum: ['Easy', 'Medium', 'Hard', ''],
                 default: ''
             },
+            companyTags: [{
+                type: String,
+                trim: true
+            }],
             // Reference to the main Problem collection if the user has "saved" it
             problemRef: {
                 type: Schema.Types.ObjectId,
