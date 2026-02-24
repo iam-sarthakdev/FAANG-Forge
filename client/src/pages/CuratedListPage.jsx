@@ -733,6 +733,20 @@ const CuratedListsPage = () => {
         return sections;
     }, [list, sortMode]);
 
+    // Difficulty breakdown stats (must be before any early returns to obey Rules of Hooks)
+    const diffStats = useMemo(() => {
+        const stats = { Easy: { solved: 0, total: 0 }, Medium: { solved: 0, total: 0 }, Hard: { solved: 0, total: 0 } };
+        if (!list?.sections) return stats;
+        list.sections.forEach(s => s.problems.forEach(p => {
+            const d = p.difficulty;
+            if (stats[d]) {
+                stats[d].total++;
+                if (p.isCompleted) stats[d].solved++;
+            }
+        }));
+        return stats;
+    }, [list]);
+
     const renderDragOverlay = () => {
         if (!activeItem) return null;
         // Return simplified view for drag preview
@@ -848,19 +862,6 @@ const CuratedListsPage = () => {
     }));
     const progress = total === 0 ? 0 : Math.round((solved / total) * 100);
 
-    // Difficulty breakdown stats
-    const diffStats = useMemo(() => {
-        const stats = { Easy: { solved: 0, total: 0 }, Medium: { solved: 0, total: 0 }, Hard: { solved: 0, total: 0 } };
-        if (!list?.sections) return stats;
-        list.sections.forEach(s => s.problems.forEach(p => {
-            const d = p.difficulty;
-            if (stats[d]) {
-                stats[d].total++;
-                if (p.isCompleted) stats[d].solved++;
-            }
-        }));
-        return stats;
-    }, [list]);
 
     return (
         <div className="min-h-screen bg-[#030014] text-white p-6 md:p-12 font-sans selection:bg-fuchsia-500/30 overflow-hidden relative">
