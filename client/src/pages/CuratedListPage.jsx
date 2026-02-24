@@ -6,6 +6,14 @@ import {
     Lock, ArrowUp, ArrowDown, RefreshCw, ArrowUpDown, GripVertical,
     Code2, Tag, X, Save, Building2
 } from 'lucide-react';
+import Editor from 'react-simple-code-editor';
+import Prism from 'prismjs';
+import 'prismjs/themes/prism-tomorrow.css';
+import 'prismjs/components/prism-java';
+import 'prismjs/components/prism-python';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-c';
+import 'prismjs/components/prism-cpp';
 import { markAsRevised } from '../services/api';
 import {
     DndContext,
@@ -1069,8 +1077,8 @@ const CuratedListsPage = () => {
                                                                                 key={lang.value}
                                                                                 onClick={() => setCodeLang(lang.value)}
                                                                                 className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${codeLang === lang.value
-                                                                                        ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30 shadow-sm shadow-violet-500/10'
-                                                                                        : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.04] border border-transparent'
+                                                                                    ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30 shadow-sm shadow-violet-500/10'
+                                                                                    : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.04] border border-transparent'
                                                                                     }`}
                                                                             >
                                                                                 <span className="text-[10px]">{lang.icon}</span>
@@ -1079,15 +1087,31 @@ const CuratedListsPage = () => {
                                                                         ))}
                                                                     </div>
 
-                                                                    {/* Code Editor Area */}
-                                                                    <div className="relative">
-                                                                        <textarea
+                                                                    {/* Code Editor Area with Syntax Highlighting */}
+                                                                    <div className="relative" style={{ fontSize: '13px', lineHeight: '1.6' }}>
+                                                                        <Editor
                                                                             value={codeInput}
-                                                                            onChange={(e) => setCodeInput(e.target.value)}
-                                                                            placeholder={"// Paste your solution code here...\n// This helps with quick revision later.\n\n"}
-                                                                            className="w-full min-h-[280px] bg-[#0d1117] p-5 text-[13px] leading-6 font-mono text-[#e6edf3] placeholder-slate-700 outline-none resize-y selection:bg-violet-500/30 tab-size-4"
-                                                                            spellCheck="false"
-                                                                            style={{ tabSize: 4 }}
+                                                                            onValueChange={code => setCodeInput(code)}
+                                                                            highlight={code => {
+                                                                                const langMap = { cpp: 'cpp', java: 'java', python: 'python', javascript: 'javascript' };
+                                                                                const grammar = Prism.languages[langMap[codeLang] || 'javascript'];
+                                                                                if (!grammar) return code;
+                                                                                return Prism.highlight(code, grammar, langMap[codeLang] || 'javascript');
+                                                                            }}
+                                                                            padding={20}
+                                                                            placeholder={'// Paste your solution code here...\n// Syntax highlighting is automatic.'}
+                                                                            className="code-editor-area"
+                                                                            style={{
+                                                                                fontFamily: '"Fira Code", "JetBrains Mono", "Cascadia Code", "SF Mono", Consolas, monospace',
+                                                                                fontSize: '13px',
+                                                                                lineHeight: '1.7',
+                                                                                minHeight: '500px',
+                                                                                background: '#0d1117',
+                                                                                color: '#e6edf3',
+                                                                                caretColor: '#58a6ff',
+                                                                                overflow: 'auto',
+                                                                            }}
+                                                                            textareaClassName="code-editor-textarea"
                                                                         />
                                                                     </div>
 

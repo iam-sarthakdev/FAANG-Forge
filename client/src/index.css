@@ -9,16 +9,20 @@
   --bg-card: rgba(255, 255, 255, 0.03);
   --bg-card-hover: rgba(255, 255, 255, 0.08);
   --text-primary: #FFFFFF;
-  --text-secondary: #A1A1AA; /* Zinc-400 */
-  --accent-primary: #8B5CF6; /* Violet-500 */
-  --accent-secondary: #EC4899; /* Pink-500 */
+  --text-secondary: #A1A1AA;
+  /* Zinc-400 */
+  --accent-primary: #8B5CF6;
+  /* Violet-500 */
+  --accent-secondary: #EC4899;
+  /* Pink-500 */
   --border-color: rgba(255, 255, 255, 0.08);
 }
 
 @layer base {
   body {
     @apply bg-[#050505] text-slate-200 antialiased selection:bg-purple-500/30 selection:text-white;
-    font-family: 'Outfit', 'Inter', system-ui, sans-serif; /* Recommend Outfit or Inter */
+    font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+    /* Recommend Outfit or Inter */
   }
 
   /* Smooth Scrolling */
@@ -33,7 +37,7 @@
   .glass-panel {
     @apply bg-[#0a0a0b]/80 backdrop-blur-xl border border-white/5 shadow-2xl;
   }
-  
+
   .glass-card {
     @apply bg-[#111113] border border-white/[0.06] rounded-xl shadow-sm hover:border-white/10 transition-colors duration-200;
   }
@@ -52,11 +56,11 @@
     width: 6px;
     height: 6px;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar-thumb {
     @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
   }
@@ -74,7 +78,7 @@
   .prose-custom h2 {
     @apply text-2xl font-semibold tracking-tight text-white mt-12 mb-6 flex items-center gap-3;
   }
-  
+
   /* Add a decorative line or icon before H2 if desired via pseudo-element, commonly done in react component though */
 
   .prose-custom h3 {
@@ -114,7 +118,7 @@
   .prose-custom pre {
     @apply bg-[#0f0f10] border border-white/10 rounded-xl p-0 overflow-hidden my-8 shadow-2xl;
   }
-  
+
   .prose-custom pre code {
     @apply bg-transparent text-inherit p-0 border-none;
   }
@@ -122,15 +126,15 @@
   .prose-custom a {
     @apply text-blue-400 hover:text-blue-300 underline underline-offset-4 decoration-blue-400/30 transition-colors;
   }
-  
+
   .prose-custom table {
     @apply w-full my-8 text-left border-collapse;
   }
-  
+
   .prose-custom th {
     @apply border-b border-white/10 pb-3 font-semibold text-white;
   }
-  
+
   .prose-custom td {
     @apply border-b border-white/5 py-3 text-slate-400;
   }
@@ -148,9 +152,116 @@
   .animate-fade-in {
     animation: fadeIn 0.5s ease-out forwards;
   }
-  
+
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
+}
+
+/* Code Editor - Prism Theme Overrides */
+.code-editor-area {
+  background: #0d1117 !important;
+  border-radius: 0 !important;
+}
+
+.code-editor-area pre {
+  background: transparent !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+.code-editor-area textarea {
+  outline: none !important;
+  border: none !important;
+  caret-color: #58a6ff !important;
+}
+
+.code-editor-area textarea::placeholder {
+  color: #484f58 !important;
+}
+
+/* Prism syntax colors - GitHub Dark theme */
+.code-editor-area .token.comment,
+.code-editor-area .token.prolog,
+.code-editor-area .token.doctype,
+.code-editor-area .token.cdata {
+  color: #8b949e !important;
+  font-style: italic;
+}
+
+.code-editor-area .token.keyword {
+  color: #ff7b72 !important;
+  font-weight: 500;
+}
+
+.code-editor-area .token.string,
+.code-editor-area .token.char {
+  color: #a5d6ff !important;
+}
+
+.code-editor-area .token.number {
+  color: #79c0ff !important;
+}
+
+.code-editor-area .token.boolean {
+  color: #79c0ff !important;
+}
+
+.code-editor-area .token.function {
+  color: #d2a8ff !important;
+}
+
+.code-editor-area .token.class-name {
+  color: #ffa657 !important;
+  font-weight: 500;
+}
+
+.code-editor-area .token.operator {
+  color: #ff7b72 !important;
+}
+
+.code-editor-area .token.punctuation {
+  color: #c9d1d9 !important;
+}
+
+.code-editor-area .token.builtin {
+  color: #ffa657 !important;
+}
+
+.code-editor-area .token.variable {
+  color: #ffa657 !important;
+}
+
+.code-editor-area .token.constant {
+  color: #79c0ff !important;
+}
+
+.code-editor-area .token.property {
+  color: #79c0ff !important;
+}
+
+.code-editor-area .token.attr-name {
+  color: #79c0ff !important;
+}
+
+.code-editor-area .token.selector {
+  color: #7ee787 !important;
+}
+
+.code-editor-area .token.regex {
+  color: #a5d6ff !important;
+}
+
+.code-editor-area .token.important {
+  color: #ff7b72 !important;
 }
