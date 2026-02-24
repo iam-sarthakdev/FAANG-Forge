@@ -1035,43 +1035,67 @@ const CuratedListsPage = () => {
                                                                 initial={{ height: 0, opacity: 0 }}
                                                                 animate={{ height: 'auto', opacity: 1 }}
                                                                 exit={{ height: 0, opacity: 0 }}
-                                                                transition={{ duration: 0.2 }}
+                                                                transition={{ duration: 0.25, ease: 'easeOut' }}
                                                                 className="overflow-hidden"
                                                             >
-                                                                <div className="ml-12 mt-1 mb-2 p-4 rounded-xl bg-[#0a0a0f] border border-white/[0.06]">
-                                                                    <div className="flex items-center justify-between mb-3">
-                                                                        <div className="flex items-center gap-2">
-                                                                            <Code2 size={14} className="text-violet-400" />
-                                                                            <span className="text-xs font-semibold text-slate-300">Solution Code</span>
+                                                                <div className="ml-10 mt-2 mb-3 rounded-2xl bg-[#0d1117] border border-white/[0.08] shadow-xl shadow-black/30 overflow-hidden">
+                                                                    {/* Header Bar */}
+                                                                    <div className="flex items-center justify-between px-5 py-3 bg-[#161b22] border-b border-white/[0.06]">
+                                                                        <div className="flex items-center gap-2.5">
+                                                                            <div className="w-7 h-7 rounded-lg bg-violet-500/15 flex items-center justify-center">
+                                                                                <Code2 size={14} className="text-violet-400" />
+                                                                            </div>
+                                                                            <span className="text-sm font-semibold text-slate-200 tracking-wide">Solution Code</span>
                                                                         </div>
-                                                                        <div className="flex items-center gap-2">
-                                                                            <select
-                                                                                value={codeLang}
-                                                                                onChange={(e) => setCodeLang(e.target.value)}
-                                                                                className="text-xs bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-slate-300 outline-none appearance-none cursor-pointer"
-                                                                            >
-                                                                                <option value="cpp">C++</option>
-                                                                                <option value="java">Java</option>
-                                                                                <option value="python">Python</option>
-                                                                                <option value="javascript">JavaScript</option>
-                                                                            </select>
-                                                                            <button
-                                                                                onClick={handleSaveCode}
-                                                                                disabled={codeSaving}
-                                                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold transition-colors disabled:opacity-50"
-                                                                            >
-                                                                                <Save size={12} />
-                                                                                {codeSaving ? 'Saving...' : 'Save'}
-                                                                            </button>
-                                                                        </div>
+                                                                        <button
+                                                                            onClick={handleSaveCode}
+                                                                            disabled={codeSaving}
+                                                                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white text-xs font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-green-600/20 hover:shadow-green-500/30"
+                                                                        >
+                                                                            <Save size={13} />
+                                                                            {codeSaving ? 'Saving...' : 'Save Code'}
+                                                                        </button>
                                                                     </div>
-                                                                    <textarea
-                                                                        value={codeInput}
-                                                                        onChange={(e) => setCodeInput(e.target.value)}
-                                                                        placeholder="Paste your solution code here for quick revision..."
-                                                                        className="w-full min-h-[200px] bg-black/50 border border-white/[0.06] rounded-xl p-4 text-sm font-mono text-slate-200 placeholder-slate-600 outline-none resize-y focus:border-violet-500/30 transition-colors"
-                                                                        spellCheck="false"
-                                                                    />
+
+                                                                    {/* Language Tabs */}
+                                                                    <div className="flex items-center gap-1 px-5 py-2.5 bg-[#0d1117] border-b border-white/[0.04]">
+                                                                        {[
+                                                                            { value: 'cpp', label: 'C++', icon: '⚡' },
+                                                                            { value: 'java', label: 'Java', icon: '☕' },
+                                                                            { value: 'python', label: 'Python', icon: '🐍' },
+                                                                            { value: 'javascript', label: 'JavaScript', icon: '🟨' }
+                                                                        ].map(lang => (
+                                                                            <button
+                                                                                key={lang.value}
+                                                                                onClick={() => setCodeLang(lang.value)}
+                                                                                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${codeLang === lang.value
+                                                                                        ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30 shadow-sm shadow-violet-500/10'
+                                                                                        : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.04] border border-transparent'
+                                                                                    }`}
+                                                                            >
+                                                                                <span className="text-[10px]">{lang.icon}</span>
+                                                                                {lang.label}
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+
+                                                                    {/* Code Editor Area */}
+                                                                    <div className="relative">
+                                                                        <textarea
+                                                                            value={codeInput}
+                                                                            onChange={(e) => setCodeInput(e.target.value)}
+                                                                            placeholder={"// Paste your solution code here...\n// This helps with quick revision later.\n\n"}
+                                                                            className="w-full min-h-[280px] bg-[#0d1117] p-5 text-[13px] leading-6 font-mono text-[#e6edf3] placeholder-slate-700 outline-none resize-y selection:bg-violet-500/30 tab-size-4"
+                                                                            spellCheck="false"
+                                                                            style={{ tabSize: 4 }}
+                                                                        />
+                                                                    </div>
+
+                                                                    {/* Footer Status */}
+                                                                    <div className="flex items-center justify-between px-5 py-2 bg-[#161b22] border-t border-white/[0.06] text-[10px] text-slate-600">
+                                                                        <span>{codeInput.split('\n').length} lines</span>
+                                                                        <span>{codeLang === 'cpp' ? 'C++' : codeLang === 'java' ? 'Java' : codeLang === 'python' ? 'Python' : 'JavaScript'}</span>
+                                                                    </div>
                                                                 </div>
                                                             </motion.div>
                                                         )}
