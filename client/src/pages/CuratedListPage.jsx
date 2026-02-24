@@ -193,23 +193,23 @@ const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleT
                                 </button>
                             </div>
 
-                            <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-md border tracking-wider ${problem.difficulty === 'Easy' ? 'bg-green-900/20 text-green-400 border-green-500/20' :
-                                problem.difficulty === 'Medium' ? 'bg-yellow-900/20 text-yellow-400 border-yellow-500/20' :
-                                    problem.difficulty === 'Hard' ? 'bg-red-900/20 text-red-400 border-red-500/20' :
+                            <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-md border tracking-wider ${String(problem.difficulty) === 'Easy' ? 'bg-green-900/20 text-green-400 border-green-500/20' :
+                                String(problem.difficulty) === 'Medium' ? 'bg-yellow-900/20 text-yellow-400 border-yellow-500/20' :
+                                    String(problem.difficulty) === 'Hard' ? 'bg-red-900/20 text-red-400 border-red-500/20' :
                                         'bg-slate-800 text-slate-400 border-slate-700'
                                 }`}>
-                                {problem.difficulty || 'N/A'}
+                                {String(problem.difficulty || 'N/A')}
                             </span>
                             <span className="text-[10px] font-medium px-2.5 py-1 rounded-md bg-slate-800/50 text-slate-400 border border-slate-700/50 flex items-center gap-1.5 hover:bg-slate-800 transition-colors">
-                                {problem.platform === 'LeetCode' ? <Globe size={11} /> : <Github size={11} />}
-                                {problem.platform}
+                                {String(problem.platform) === 'LeetCode' ? <Globe size={11} /> : <Github size={11} />}
+                                {String(problem.platform || '')}
                             </span>
 
                             {/* Company Tags */}
-                            {problem.companyTags && problem.companyTags.length > 0 && problem.companyTags.map((tag, i) => (
+                            {Array.isArray(problem.companyTags) && problem.companyTags.length > 0 && problem.companyTags.map((tag, i) => (
                                 <span key={i} className="text-[10px] font-medium px-2 py-1 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center gap-1">
                                     <Building2 size={10} />
-                                    {tag}
+                                    {String(tag)}
                                 </span>
                             ))}
 
@@ -224,10 +224,10 @@ const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleT
                                 </button>
                             )}
 
-                            {(problem.problemRef?.revision_count > 0) && (
+                            {(problem.problemRef && typeof problem.problemRef === 'object' && problem.problemRef.revision_count > 0) && (
                                 <span className="text-[10px] font-medium px-2.5 py-1 rounded-md bg-blue-900/20 text-blue-400 border border-blue-500/20 flex items-center gap-1">
                                     <RefreshCw size={10} />
-                                    {problem.problemRef.revision_count}
+                                    {Number(problem.problemRef.revision_count) || 0}
                                 </span>
                             )}
                         </div>
