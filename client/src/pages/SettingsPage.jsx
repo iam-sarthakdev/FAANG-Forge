@@ -110,15 +110,17 @@ const SettingsPage = () => {
                         <label className="block text-sm font-medium text-white/80 mb-2 flex items-center gap-2">
                             <AtSign className="w-4 h-4" /> Public Username
                         </label>
-                        <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">algo-flow.com/u/</span>
+                        <div className="flex bg-[#1e1e24] border border-white/10 rounded-lg focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-colors overflow-hidden">
+                            <span className="pl-4 pr-2 py-3 text-white/40 select-none flex items-center bg-white/5 border-r border-white/5">
+                                algo-flow.com/u/
+                            </span>
                             <input
                                 type="text"
                                 name="username"
                                 value={formData.username}
                                 onChange={handleChange}
                                 placeholder="username"
-                                className="w-full bg-[#1e1e24] border border-white/10 rounded-lg pl-[118px] pr-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                                className="flex-1 bg-transparent px-3 py-3 text-white focus:outline-none"
                             />
                         </div>
                         <p className="text-xs text-white/40 mt-1">

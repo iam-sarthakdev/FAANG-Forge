@@ -55,11 +55,26 @@ const PublicProfilePage = () => {
         );
     }
 
-    const { user, activity } = profileData;
+    const { user, activityDates } = profileData;
     const stats = user.stats || { totalProblems: 0, currentStreak: 0, totalRevisions: 0 };
     
     const today = new Date();
     const oneYearAgo = subDays(today, 365);
+
+    // Group activity by local day
+    const activityMap = {};
+    if (activityDates) {
+        activityDates.forEach(dateStr => {
+            const d = new Date(dateStr);
+            const localDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            activityMap[localDateStr] = (activityMap[localDateStr] || 0) + 1;
+        });
+    }
+
+    const activity = Object.keys(activityMap).map(date => ({
+        date,
+        count: activityMap[date]
+    }));
 
     // Initial letters for avatar fallback
     const initials = user.name?.substring(0, 2).toUpperCase() || 'U';

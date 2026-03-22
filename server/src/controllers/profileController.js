@@ -28,24 +28,10 @@ export const getPublicProfile = async (req, res) => {
             revised_at: { $gte: oneYearAgo }
         }).select('revised_at');
 
-        // Aggregate activity by day (YYYY-MM-DD string)
-        const activityMap = {};
-
-        recentProblems.forEach(p => {
-            const dateStr = p.updatedAt.toISOString().split('T')[0];
-            activityMap[dateStr] = (activityMap[dateStr] || 0) + 1;
-        });
-
-        recentRevisions.forEach(r => {
-            const dateStr = r.revised_at.toISOString().split('T')[0];
-            activityMap[dateStr] = (activityMap[dateStr] || 0) + 1;
-        });
-
-        // Convert to array format for react-calendar-heatmap
-        const activityData = Object.keys(activityMap).map(date => ({
-            date,
-            count: activityMap[date]
-        }));
+        const activityDates = [
+            ...recentProblems.map(p => p.updatedAt),
+            ...recentRevisions.map(r => r.revised_at)
+        ];
 
         res.status(200).json({
             success: true,
@@ -57,7 +43,7 @@ export const getPublicProfile = async (req, res) => {
                     createdAt: user.createdAt,
                     stats: user.stats
                 },
-                activity: activityData
+                activityDates
             }
         });
     } catch (error) {

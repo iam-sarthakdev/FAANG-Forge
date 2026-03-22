@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Trash2, Copy, Check, Calendar, Code, FileText, Clock, Box, ExternalLink, RefreshCw, Tag, Edit2, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import CodeEditor from '../components/CodeEditor';
+import { executeCode, LANGUAGE_VERSIONS } from '../services/compilerApi';
+import { Play } from 'lucide-react';
 import { fetchProblemById, updateProblem, deleteProblem, createProblem, markAsRevised, fetchPatterns } from '../services/api';
 import { autoPopulateNotes } from '../services/leetcodeApi';
 import theme from '../styles/theme';
@@ -25,6 +26,12 @@ const ProblemDetail = () => {
     const [isLoadingLeetCode, setIsLoadingLeetCode] = useState(false);
     const [leetCodeError, setLeetCodeError] = useState('');
     const [showLeetCodeButton, setShowLeetCodeButton] = useState(true);
+
+    // Code Execution States
+    const [isExecuting, setIsExecuting] = useState(false);
+    const [consoleOutput, setConsoleOutput] = useState('');
+    const [customInput, setCustomInput] = useState('');
+    const [showConsole, setShowConsole] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -578,75 +585,96 @@ const ProblemDetail = () => {
                                     />
                                 </div>
                             ) : (
-                                <div className="flex-1 overflow-hidden h-full flex flex-col">
-                                    <div className="flex items-center justify-between px-4 py-2 bg-[#1E1E1E] border-b border-white/10 shrink-0 z-10">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs text-white/50 lowercase bg-white/5 px-2 py-1 rounded">
-                                                {formData.language || 'java'}
-                                            </span>
-                                            {/* Edit Toggle */}
-                                            {(!formData.codeSnippet || isEditingCode) ? (
-                                                <span className="text-xs text-green-400 flex items-center gap-1">
-                                                    <Edit2 size={12} /> Editing
-                                                </span>
-                                            ) : (
-                                                <button
-                                                    onClick={() => setIsEditingCode(true)}
-                                                    className="text-xs px-2 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded flex items-center gap-1 transition-colors"
-                                                >
-                                                    <Edit2 size={12} />
-                                                    Edit Code
-                                                </button>
-                                            )}
+                                <div className="flex-1 overflow-hidden h-full flex flex-col relative text-sm">
+                                    {/* Editor Header */}
+                                    <div className="flex items-center justify-between px-4 py-3 bg-[#1E1E1E] border-b border-white/10 shrink-0 z-10">
+                                        <div className="flex items-center gap-3">
+                                            <select
+                                                className="bg-black/40 border border-white/10 text-white/80 rounded px-2 py-1 text-xs outline-none focus:border-primary/50"
+                                                value={formData.language || 'java'}
+                                                onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+                                            >
+                                                {Object.keys(LANGUAGE_VERSIONS).map(lang => (
+                                                    <option key={lang} value={lang}>{lang === 'cpp' ? 'C++' : lang}</option>
+                                                ))}
+                                            </select>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            {isEditingCode && formData.codeSnippet && (
-                                                <button
-                                                    onClick={() => setIsEditingCode(false)}
-                                                    className="text-xs px-2 py-1 bg-white/5 hover:bg-white/10 text-white rounded flex items-center gap-1 transition-colors"
-                                                >
-                                                    <Check size={12} />
-                                                    Done
-                                                </button>
-                                            )}
                                             <button
-                                                onClick={() => {
-                                                    navigator.clipboard.writeText(formData.codeSnippet);
+                                                onClick={async () => {
+                                                    setShowConsole(true);
+                                                    setIsExecuting(true);
+                                                    setConsoleOutput('Executing...');
+                                                    try {
+                                                        const result = await executeCode(formData.language || 'java', formData.codeSnippet, customInput);
+                                                        if (result.run) {
+                                                            let output = result.run.stdout;
+                                                            if (result.run.stderr) {
+                                                                output += (output ? '\n' : '') + result.run.stderr;
+                                                            }
+                                                            setConsoleOutput(output || 'Program exited cleanly with no output.');
+                                                        } else {
+                                                            setConsoleOutput("No output returned.");
+                                                        }
+                                                    } catch (err) {
+                                                        setConsoleOutput("Execution Error: \n" + err.message);
+                                                    } finally {
+                                                        setIsExecuting(false);
+                                                    }
                                                 }}
-                                                className="text-xs px-2 py-1 bg-white/5 hover:bg-white/10 rounded flex items-center gap-1 text-white/70 hover:text-white transition-colors"
+                                                disabled={isExecuting || !formData.codeSnippet}
+                                                className="text-xs px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 rounded flex items-center gap-1 transition-colors disabled:opacity-50"
                                             >
-                                                <Copy size={12} />
+                                                <Play size={14} />
+                                                {isExecuting ? 'Running...' : 'Run Code'}
+                                            </button>
+                                            <button
+                                                onClick={() => navigator.clipboard.writeText(formData.codeSnippet)}
+                                                className="text-xs px-2 py-1.5 bg-white/5 hover:bg-white/10 rounded flex items-center gap-1 text-white/70 hover:text-white transition-colors border border-white/10"
+                                            >
+                                                <Copy size={14} />
                                                 Copy
                                             </button>
                                         </div>
                                     </div>
 
-                                    <div className="flex-1 relative overflow-auto">
-                                        {isEditingCode || !formData.codeSnippet ? (
-                                            <textarea
-                                                className="w-full h-full bg-[#1E1E1E] p-6 text-white/90 leading-relaxed outline-none resize-none font-mono text-sm"
-                                                placeholder="// Paste or write your solution code here..."
-                                                value={formData.codeSnippet}
-                                                onChange={(e) => setFormData({ ...formData, codeSnippet: e.target.value })}
-                                                spellCheck="false"
-                                            />
-                                        ) : (
-                                            <SyntaxHighlighter
+                                    {/* Monaco Editor Split pane layout */}
+                                    <div className="flex-1 relative flex flex-col h-full bg-[#151517]">
+                                        <div className={`overflow-hidden transition-all duration-300 ${showConsole ? 'h-3/5' : 'flex-1'}`}>
+                                            <CodeEditor 
                                                 language={formData.language || 'java'}
-                                                style={vscDarkPlus}
-                                                customStyle={{
-                                                    margin: 0,
-                                                    padding: '1.5rem',
-                                                    background: '#1E1E1E',
-                                                    fontSize: '14px',
-                                                    lineHeight: '1.6',
-                                                    minHeight: '100%'
-                                                }}
-                                                showLineNumbers={true}
-                                                wrapLines={true}
-                                            >
-                                                {formData.codeSnippet}
-                                            </SyntaxHighlighter>
+                                                value={formData.codeSnippet || ''}
+                                                onChange={(val) => setFormData({ ...formData, codeSnippet: val })}
+                                            />
+                                        </div>
+
+                                        {/* Console Drawer */}
+                                        {showConsole && (
+                                            <div className="flex-1 border-t border-white/10 flex flex-col bg-[#1E1E1E]">
+                                                <div className="flex items-center justify-between px-4 py-2 bg-black/20 border-b border-white/5 shrink-0">
+                                                    <span className="text-xs font-semibold text-white/70">Console Output</span>
+                                                    <button onClick={() => setShowConsole(false)} className="text-white/40 hover:text-white transition-colors">—</button>
+                                                </div>
+                                                <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                                                    {/* Input Area */}
+                                                    <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-white/5 p-3 flex flex-col shrink-0">
+                                                        <label className="text-xs text-white/40 mb-2 font-mono">Input (stdin):</label>
+                                                        <textarea 
+                                                            className="flex-1 w-full bg-black/40 border border-white/5 rounded p-2 text-white/80 font-mono text-xs outline-none resize-none focus:border-white/20"
+                                                            value={customInput}
+                                                            onChange={e => setCustomInput(e.target.value)}
+                                                            placeholder="Custom test case input..."
+                                                        />
+                                                    </div>
+                                                    {/* Output Area */}
+                                                    <div className="w-full md:w-2/3 p-3 overflow-auto flex flex-col">
+                                                        <label className="text-xs text-white/40 mb-2 font-mono block shrink-0">Output (stdout/stderr):</label>
+                                                        <pre className="flex-1 font-mono text-xs text-white/80 whitespace-pre-wrap break-all">
+                                                            {consoleOutput}
+                                                        </pre>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
