@@ -607,14 +607,21 @@ const ProblemDetail = () => {
                                                     setConsoleOutput('Executing...');
                                                     try {
                                                         const result = await executeCode(formData.language || 'java', formData.codeSnippet, customInput);
-                                                        if (result.run) {
+                                                        
+                                                        if (result.compile && result.compile.code !== 0) {
+                                                            setConsoleOutput("Compilation Error:\n" + (result.compile.stderr || result.compile.output));
+                                                        } else if (result.run) {
                                                             let output = result.run.stdout;
                                                             if (result.run.stderr) {
                                                                 output += (output ? '\n' : '') + result.run.stderr;
                                                             }
+                                                            // Sometimes run fails (e.g., class name mismatch in Java)
+                                                            if (result.run.code !== 0 && !output) {
+                                                                output = `Process exited with code ${result.run.code}`;
+                                                            }
                                                             setConsoleOutput(output || 'Program exited cleanly with no output.');
                                                         } else {
-                                                            setConsoleOutput("No output returned.");
+                                                            setConsoleOutput(JSON.stringify(result, null, 2));
                                                         }
                                                     } catch (err) {
                                                         setConsoleOutput("Execution Error: \n" + err.message);

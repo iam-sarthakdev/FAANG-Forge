@@ -1,13 +1,13 @@
 import axios from 'axios';
 
-const PISTON_API_URL = 'https://emacs.piston.rs/api/v2/execute';
+const PISTON_API_URL = 'https://emkc.org/api/v2/piston/execute';
 
 export const LANGUAGE_VERSIONS = {
-    javascript: "18.15.0",
-    python: "3.10.0",
-    java: "15.0.2",
-    cpp: "10.2.0",
-    c: "10.2.0"
+    javascript: "*",
+    python: "*",
+    java: "*",
+    cpp: "*",
+    c: "*"
 };
 
 export const executeCode = async (language, sourceCode, stdin = "") => {
