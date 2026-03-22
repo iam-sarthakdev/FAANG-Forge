@@ -150,15 +150,23 @@ export const systemDesignAPI = {
     }
 };
 
+// Separate axios instance for public endpoints (no auth interceptor, no withCredentials)
+const publicApi = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json'
+    }
+});
+
 // Platform Stats API (public - no auth required)
 export const platformAPI = {
     getStats: async () => {
-        const response = await api.get('/platform/stats');
+        const response = await publicApi.get('/platform/stats');
         return response.data;
     },
 
     getLeaderboard: async () => {
-        const response = await api.get('/platform/leaderboard');
+        const response = await publicApi.get('/platform/leaderboard');
         return response.data;
     }
 };
@@ -171,7 +179,7 @@ export const feedbackAPI = {
     },
 
     getApproved: async () => {
-        const response = await api.get('/feedback/approved');
+        const response = await publicApi.get('/feedback/approved');
         return response.data;
     },
 
@@ -182,4 +190,3 @@ export const feedbackAPI = {
 };
 
 export default api;
-
