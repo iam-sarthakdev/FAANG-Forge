@@ -162,12 +162,12 @@ const publicApi = axios.create({
 export const platformAPI = {
     getStats: async () => {
         const response = await publicApi.get('/platform/stats');
-        return response.data;
+        return response.data; // The component handles .data
     },
 
     getLeaderboard: async () => {
         const response = await publicApi.get('/platform/leaderboard');
-        return response.data;
+        return response.data; // The component handles .data
     }
 };
 

@@ -8,13 +8,16 @@ import { platformAPI, feedbackAPI } from '../services/api';
 const AnimatedCounter = ({ end, duration = 2000, suffix = '' }) => {
     const [count, setCount] = useState(0);
     const ref = useRef(null);
-    const [hasAnimated, setHasAnimated] = useState(false);
+    const [lastAnimatedEnd, setLastAnimatedEnd] = useState(null);
 
     useEffect(() => {
+        // Only run animation when we have real data (end > 0) or if it's genuinely 0
         const observer = new IntersectionObserver(
             ([entry]) => {
-                if (entry.isIntersecting && !hasAnimated) {
-                    setHasAnimated(true);
+                // Animate if it's visible AND we haven't animated to this specific 'end' value yet
+                if (entry.isIntersecting && end !== lastAnimatedEnd) {
+                    setLastAnimatedEnd(end);
+                    
                     const startTime = Date.now();
                     const animate = () => {
                         const elapsed = Date.now() - startTime;
@@ -34,7 +37,7 @@ const AnimatedCounter = ({ end, duration = 2000, suffix = '' }) => {
 
         if (ref.current) observer.observe(ref.current);
         return () => observer.disconnect();
-    }, [end, duration, hasAnimated]);
+    }, [end, duration, lastAnimatedEnd]);
 
     return (
         <span ref={ref}>
