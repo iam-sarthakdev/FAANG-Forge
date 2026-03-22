@@ -2,6 +2,14 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
+    username: {
+        type: String,
+        unique: true,
+        sparse: true, // Allows nulls to be unique
+        trim: true,
+        maxlength: [30, 'Username cannot exceed 30 characters'],
+        match: [/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores, and hyphens']
+    },
     name: {
         type: String,
         required: [true, 'Name is required'],
@@ -73,8 +81,27 @@ const userSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Hash password before saving
+// Hash password before saving and auto-generate username
 userSchema.pre('save', async function (next) {
+    // Auto-generate username from email if not present
+    if (!this.username && this.email) {
+        let baseUsername = this.email.split('@')[0].replace(/[^a-zA-Z0-9_-]/g, '');
+        if (!baseUsername) baseUsername = 'user';
+        
+        let uniqueUsername = baseUsername;
+        let counter = 1;
+        
+        // This is a simple fallback. In high concurrency, a unique index violation might still occur,
+        // but it's sufficient for auto-generation.
+        while (true) {
+            const existing = await mongoose.models.User.findOne({ username: uniqueUsername });
+            if (!existing || existing._id.equals(this._id)) break;
+            uniqueUsername = `${baseUsername}${counter}`;
+            counter++;
+        }
+        this.username = uniqueUsername;
+    }
+
     // Only hash if password is modified
     if (!this.isModified('password')) return next();
 
@@ -104,6 +131,7 @@ userSchema.methods.toJSON = function () {
 };
 
 // Indexes
+userSchema.index({ username: 1 });
 userSchema.index({ email: 1 });
 userSchema.index({ createdAt: -1 });
 

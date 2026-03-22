@@ -13,6 +13,7 @@ import companyProblemsRoutes from './routes/companyProblems.js';
 import contentRoutes from './routes/content.routes.js';
 import platformRoutes from './routes/platform.routes.js';
 import feedbackRoutes from './routes/feedback.routes.js';
+import profileRoutes from './routes/profile.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { scheduleReminderJob } from './jobs/reminderJob.js';
 import { scheduleStatsRefreshJob } from './jobs/statsRefreshJob.js';
@@ -50,6 +51,7 @@ app.use('/api/lists', problemListRoutes);
 app.use('/api/admin', seedRoutes);
 app.use('/api/platform', platformRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/public/profile', profileRoutes);
 
 
 // Health check

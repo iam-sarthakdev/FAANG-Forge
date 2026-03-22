@@ -265,3 +265,48 @@
 .code-editor-area .token.important {
   color: #ff7b72 !important;
 }
+
+/* React Calendar Heatmap Overrides */
+.react-calendar-heatmap text {
+  font-size: 10px;
+  fill: #A1A1AA;
+}
+
+.react-calendar-heatmap .react-calendar-heatmap-small-text {
+  font-size: 5px;
+}
+
+.react-calendar-heatmap rect:hover {
+  stroke: #fff;
+  stroke-width: 1px;
+}
+
+.react-calendar-heatmap .color-empty {
+  fill: rgba(255, 255, 255, 0.05); /* Very subtle gray for 0 */
+  rx: 2;
+  ry: 2;
+}
+
+.react-calendar-heatmap .color-scale-1 {
+  fill: #0e4429;
+  rx: 2;
+  ry: 2;
+}
+
+.react-calendar-heatmap .color-scale-2 {
+  fill: #006d32;
+  rx: 2;
+  ry: 2;
+}
+
+.react-calendar-heatmap .color-scale-3 {
+  fill: #26a641;
+  rx: 2;
+  ry: 2;
+}
+
+.react-calendar-heatmap .color-scale-4 {
+  fill: #39d353;
+  rx: 2;
+  ry: 2;
+}

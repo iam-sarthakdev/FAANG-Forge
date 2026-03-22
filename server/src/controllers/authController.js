@@ -51,6 +51,7 @@ export const register = async (req, res) => {
                 user: {
                     id: user._id,
                     name: user.name,
+                    username: user.username,
                     email: user.email,
                     avatar: user.avatar,
                     preferences: user.preferences,
@@ -116,6 +117,7 @@ export const login = async (req, res) => {
                 user: {
                     id: user._id,
                     name: user.name,
+                    username: user.username,
                     email: user.email,
                     avatar: user.avatar,
                     preferences: user.preferences,
@@ -154,6 +156,7 @@ export const getProfile = async (req, res) => {
                 user: {
                     id: user._id,
                     name: user.name,
+                    username: user.username,
                     email: user.email,
                     avatar: user.avatar,
                     preferences: user.preferences,
@@ -177,7 +180,7 @@ export const getProfile = async (req, res) => {
 // @access  Private
 export const updateProfile = async (req, res) => {
     try {
-        const { name, avatar, preferences } = req.body;
+        const { name, avatar, preferences, username } = req.body;
 
         const user = await User.findById(req.user.userId);
         if (!user) {
@@ -185,6 +188,18 @@ export const updateProfile = async (req, res) => {
                 success: false,
                 message: 'User not found'
             });
+        }
+
+        // Validate unique username
+        if (username && username !== user.username) {
+            const existing = await User.findOne({ username });
+            if (existing) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Username is already taken'
+                });
+            }
+            user.username = username;
         }
 
         // Update fields
@@ -203,6 +218,7 @@ export const updateProfile = async (req, res) => {
                 user: {
                     id: user._id,
                     name: user.name,
+                    username: user.username,
                     email: user.email,
                     avatar: user.avatar,
                     preferences: user.preferences,

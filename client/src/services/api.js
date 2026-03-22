@@ -168,6 +168,11 @@ export const platformAPI = {
     getLeaderboard: async () => {
         const response = await publicApi.get('/platform/leaderboard');
         return response.data; // The component handles .data
+    },
+
+    getPublicProfile: async (username) => {
+        const response = await publicApi.get(`/public/profile/${username}`);
+        return response.data;
     }
 };
 

@@ -21,6 +21,8 @@ import LeetCodeSettings from './pages/LeetCodeSettings';
 import CuratedListsPage from './pages/CuratedListPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import ProfileCardPage from './pages/ProfileCardPage';
+import PublicProfilePage from './pages/PublicProfilePage';
+import SettingsPage from './pages/SettingsPage';
 import PageLayout from './components/PageLayout';
 
 import './index.css';
@@ -70,12 +72,24 @@ function AppRoutes() {
                     <RegisterPage />
                 </PublicRoute>
             } />
+            <Route path="/u/:username" element={
+                <PageLayout fullWidth>
+                    <PublicProfilePage />
+                </PageLayout>
+            } />
 
             {/* Protected routes */}
             <Route path="/dashboard" element={
                 <ProtectedRoute>
                     <PageLayout>
                         <DashboardPage />
+                    </PageLayout>
+                </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+                <ProtectedRoute>
+                    <PageLayout>
+                        <SettingsPage />
                     </PageLayout>
                 </ProtectedRoute>
             } />

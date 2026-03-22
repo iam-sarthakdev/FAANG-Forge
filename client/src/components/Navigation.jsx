@@ -117,16 +117,30 @@ const Navigation = () => {
                                         <p className="text-sm text-white font-medium truncate">{user?.email}</p>
                                     </div>
 
-                                    <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:text-white hover:bg-white/10 transition-colors text-left">
-                                        <User size={16} />
+                                    {user?.username && (
+                                        <Link
+                                            to={`/u/${user.username}`}
+                                            onClick={() => setIsProfileOpen(false)}
+                                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:text-white hover:bg-white/10 transition-colors text-left"
+                                        >
+                                            <User size={16} />
+                                            View Public Profile
+                                        </Link>
+                                    )}
+                                    <Link
+                                        to="/settings"
+                                        onClick={() => setIsProfileOpen(false)}
+                                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:text-white hover:bg-white/10 transition-colors text-left"
+                                    >
+                                        <Settings size={16} />
                                         Profile Settings
-                                    </button>
+                                    </Link>
                                     <Link
                                         to="/leetcode-settings"
                                         onClick={() => setIsProfileOpen(false)}
                                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-300 hover:text-white hover:bg-white/10 transition-colors text-left"
                                     >
-                                        <Settings size={16} />
+                                        <div className="w-4 h-4 flex items-center justify-center bg-orange-500/20 text-orange-400 rounded-sm font-bold text-[10px]">L</div>
                                         Connect LeetCode
                                     </Link>
 
