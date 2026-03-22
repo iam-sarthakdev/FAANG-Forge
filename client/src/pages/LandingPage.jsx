@@ -1,16 +1,87 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Brain, Target, TrendingUp, Clock, Shield, Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Brain, Target, TrendingUp, Clock, Shield, Zap, Users, Trophy, Star, ChevronLeft, ChevronRight, Quote } from 'lucide-react';
+import { platformAPI, feedbackAPI } from '../services/api';
+
+// Animated count-up component
+const AnimatedCounter = ({ end, duration = 2000, suffix = '' }) => {
+    const [count, setCount] = useState(0);
+    const ref = useRef(null);
+    const [hasAnimated, setHasAnimated] = useState(false);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting && !hasAnimated) {
+                    setHasAnimated(true);
+                    const startTime = Date.now();
+                    const animate = () => {
+                        const elapsed = Date.now() - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+                        // Ease out cubic
+                        const eased = 1 - Math.pow(1 - progress, 3);
+                        setCount(Math.floor(eased * end));
+                        if (progress < 1) {
+                            requestAnimationFrame(animate);
+                        }
+                    };
+                    requestAnimationFrame(animate);
+                }
+            },
+            { threshold: 0.5 }
+        );
+
+        if (ref.current) observer.observe(ref.current);
+        return () => observer.disconnect();
+    }, [end, duration, hasAnimated]);
+
+    return (
+        <span ref={ref}>
+            {count.toLocaleString()}{suffix}
+        </span>
+    );
+};
 
 const LandingPage = () => {
     const navigate = useNavigate();
+    const [platformStats, setPlatformStats] = useState(null);
+    const [testimonials, setTestimonials] = useState([]);
+    const [currentTestimonial, setCurrentTestimonial] = useState(0);
+    const [leaderboard, setLeaderboard] = useState(null);
+
+    useEffect(() => {
+        // Fetch real platform stats
+        platformAPI.getStats()
+            .then(res => setPlatformStats(res.data))
+            .catch(() => {});
+
+        // Fetch approved testimonials
+        feedbackAPI.getApproved()
+            .then(res => setTestimonials(res.data || []))
+            .catch(() => {});
+
+        // Fetch leaderboard preview
+        platformAPI.getLeaderboard()
+            .then(res => setLeaderboard(res.data))
+            .catch(() => {});
+    }, []);
+
+    // Testimonial auto-rotate
+    useEffect(() => {
+        if (testimonials.length > 1) {
+            const interval = setInterval(() => {
+                setCurrentTestimonial(prev => (prev + 1) % testimonials.length);
+            }, 5000);
+            return () => clearInterval(interval);
+        }
+    }, [testimonials.length]);
 
     const features = [
         {
             icon: <Brain className="w-8 h-8" />,
             title: 'Smart Spaced Repetition',
-            description: 'AI-powered algorithm ensures you revise problems at optimal intervals for maximum retention'
+            description: 'Scientifically-proven algorithm ensures you revise problems at optimal intervals for maximum retention'
         },
         {
             icon: <Target className="w-8 h-8" />,
@@ -29,8 +100,8 @@ const LandingPage = () => {
         },
         {
             icon: <Shield className="w-8 h-8" />,
-            title: 'Secure & Private',
-            description: 'Your data is encrypted and protected with enterprise-grade security'
+            title: 'Company Problems',
+            description: '2892+ problems from 20+ FAANG & top-tier companies with difficulty filtering'
         },
         {
             icon: <Zap className="w-8 h-8" />,
@@ -38,6 +109,18 @@ const LandingPage = () => {
             description: 'Optimized performance with instant search, filtering, and real-time updates'
         }
     ];
+
+    // Star rating component
+    const StarRating = ({ rating }) => (
+        <div className="flex gap-0.5">
+            {[1, 2, 3, 4, 5].map(star => (
+                <Star
+                    key={star}
+                    className={`w-4 h-4 ${star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-white/20'}`}
+                />
+            ))}
+        </div>
+    );
 
     return (
         <div className="min-h-screen overflow-hidden">
@@ -170,55 +253,267 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            {/* Stats Section */}
+            {/* Live Platform Stats Section */}
             <section className="py-20 px-6">
                 <motion.div
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.8 }}
-                    className="max-w-5xl mx-auto glass-card p-12"
+                    className="max-w-5xl mx-auto"
                 >
-                    <div className="grid md:grid-cols-3 gap-8 text-center">
-                        <div>
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="text-center mb-10"
+                    >
+                        <h2 className="text-4xl font-bold text-gradient mb-3">
+                            Platform Activity
+                        </h2>
+                        <p className="text-white/50 text-sm flex items-center justify-center gap-2">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                            </span>
+                            Live stats from real users
+                        </p>
+                    </motion.div>
+
+                    <div className="glass-card p-12">
+                        <div className="grid md:grid-cols-4 gap-8 text-center">
                             <motion.div
-                                className="text-5xl font-bold text-gradient mb-2"
+                                initial={{ scale: 0 }}
+                                whileInView={{ scale: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.1, type: "spring" }}
+                            >
+                                <div className="text-4xl md:text-5xl font-bold text-gradient mb-2">
+                                    <AnimatedCounter end={platformStats?.totalUsers || 0} />
+                                </div>
+                                <div className="text-white/60 flex items-center justify-center gap-1.5">
+                                    <Users className="w-4 h-4" /> Registered Users
+                                </div>
+                            </motion.div>
+                            <motion.div
                                 initial={{ scale: 0 }}
                                 whileInView={{ scale: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.2, type: "spring" }}
                             >
-                                10,000+
+                                <div className="text-4xl md:text-5xl font-bold text-gradient mb-2">
+                                    <AnimatedCounter end={platformStats?.totalProblemsTracked || 0} />
+                                </div>
+                                <div className="text-white/60">Problems Tracked</div>
                             </motion.div>
-                            <div className="text-white/60">Problems Tracked</div>
-                        </div>
-                        <div>
                             <motion.div
-                                className="text-5xl font-bold text-gradient mb-2"
+                                initial={{ scale: 0 }}
+                                whileInView={{ scale: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.3, type: "spring" }}
+                            >
+                                <div className="text-4xl md:text-5xl font-bold text-gradient mb-2">
+                                    <AnimatedCounter end={platformStats?.totalRevisions || 0} />
+                                </div>
+                                <div className="text-white/60">Revisions Done</div>
+                            </motion.div>
+                            <motion.div
                                 initial={{ scale: 0 }}
                                 whileInView={{ scale: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.4, type: "spring" }}
                             >
-                                5,000+
+                                <div className="text-4xl md:text-5xl font-bold text-gradient mb-2">
+                                    <AnimatedCounter end={platformStats?.activeUsersWeek || 0} />
+                                </div>
+                                <div className="text-white/60">Active This Week</div>
                             </motion.div>
-                            <div className="text-white/60">Active Users</div>
-                        </div>
-                        <div>
-                            <motion.div
-                                className="text-5xl font-bold text-gradient mb-2"
-                                initial={{ scale: 0 }}
-                                whileInView={{ scale: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: 0.6, type: "spring" }}
-                            >
-                                95%
-                            </motion.div>
-                            <div className="text-white/60">Success Rate</div>
                         </div>
                     </div>
                 </motion.div>
             </section>
+
+            {/* Leaderboard Preview Section */}
+            {leaderboard && leaderboard.topStreaks && leaderboard.topStreaks.length > 0 && (
+                <section className="py-16 px-6">
+                    <div className="max-w-4xl mx-auto">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="text-center mb-10"
+                        >
+                            <h2 className="text-4xl font-bold mb-3">
+                                <Trophy className="inline w-8 h-8 text-yellow-400 mr-2 mb-1" />
+                                <span className="text-gradient">Top Performers</span>
+                            </h2>
+                            <p className="text-white/50">See who's crushing their interview prep</p>
+                        </motion.div>
+
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="glass-card overflow-hidden"
+                        >
+                            <div className="grid grid-cols-3 gap-px bg-white/5">
+                                {/* Top Streaks */}
+                                <div className="p-6">
+                                    <h3 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-4">🔥 Top Streaks</h3>
+                                    <div className="space-y-3">
+                                        {leaderboard.topStreaks.slice(0, 5).map((user, i) => (
+                                            <div key={i} className="flex items-center gap-3">
+                                                <span className={`text-sm font-bold w-6 ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-amber-600' : 'text-white/40'}`}>
+                                                    #{i + 1}
+                                                </span>
+                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold">
+                                                    {user.name?.[0] || '?'}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-sm font-medium truncate">{user.name}</div>
+                                                    <div className="text-xs text-white/40">{user.streak} day streak</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Top Solvers */}
+                                <div className="p-6 border-x border-white/5">
+                                    <h3 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-4">💡 Most Problems</h3>
+                                    <div className="space-y-3">
+                                        {(leaderboard.topSolvers || []).slice(0, 5).map((user, i) => (
+                                            <div key={i} className="flex items-center gap-3">
+                                                <span className={`text-sm font-bold w-6 ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-amber-600' : 'text-white/40'}`}>
+                                                    #{i + 1}
+                                                </span>
+                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-xs font-bold">
+                                                    {user.name?.[0] || '?'}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-sm font-medium truncate">{user.name}</div>
+                                                    <div className="text-xs text-white/40">{user.problemsSolved} solved</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Top Revisers */}
+                                <div className="p-6">
+                                    <h3 className="text-sm font-semibold text-white/50 uppercase tracking-wider mb-4">📚 Most Revisions</h3>
+                                    <div className="space-y-3">
+                                        {(leaderboard.topRevisers || []).slice(0, 5).map((user, i) => (
+                                            <div key={i} className="flex items-center gap-3">
+                                                <span className={`text-sm font-bold w-6 ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-amber-600' : 'text-white/40'}`}>
+                                                    #{i + 1}
+                                                </span>
+                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-xs font-bold">
+                                                    {user.name?.[0] || '?'}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-sm font-medium truncate">{user.name}</div>
+                                                    <div className="text-xs text-white/40">{user.totalRevisions} revisions</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            viewport={{ once: true }}
+                            className="text-center mt-6"
+                        >
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => navigate('/register')}
+                                className="text-primary hover:text-primary/80 text-sm font-medium"
+                            >
+                                Join to see full leaderboard →
+                            </motion.button>
+                        </motion.div>
+                    </div>
+                </section>
+            )}
+
+            {/* Testimonials Section */}
+            {testimonials.length > 0 && (
+                <section className="py-20 px-6">
+                    <div className="max-w-4xl mx-auto">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="text-center mb-12"
+                        >
+                            <h2 className="text-4xl font-bold text-gradient mb-3">
+                                What Users Say
+                            </h2>
+                            <p className="text-white/50">Real feedback from real developers</p>
+                        </motion.div>
+
+                        <div className="relative">
+                            <div className="glass-card p-10 min-h-[200px] flex flex-col items-center justify-center text-center">
+                                <AnimatePresence mode="wait">
+                                    <motion.div
+                                        key={currentTestimonial}
+                                        initial={{ opacity: 0, x: 30 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -30 }}
+                                        transition={{ duration: 0.4 }}
+                                        className="max-w-2xl"
+                                    >
+                                        <Quote className="w-8 h-8 text-primary/40 mx-auto mb-4" />
+                                        <p className="text-lg text-white/80 mb-6 italic leading-relaxed">
+                                            "{testimonials[currentTestimonial]?.message}"
+                                        </p>
+                                        <div className="flex flex-col items-center gap-2">
+                                            <StarRating rating={testimonials[currentTestimonial]?.rating || 5} />
+                                            <div className="text-white/90 font-semibold">
+                                                {testimonials[currentTestimonial]?.name}
+                                            </div>
+                                            <div className="text-white/40 text-sm">
+                                                {testimonials[currentTestimonial]?.role || 'Developer'}
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                </AnimatePresence>
+                            </div>
+
+                            {testimonials.length > 1 && (
+                                <div className="flex justify-center gap-4 mt-6">
+                                    <button
+                                        onClick={() => setCurrentTestimonial(prev => prev === 0 ? testimonials.length - 1 : prev - 1)}
+                                        className="p-2 glass-card rounded-full hover:bg-white/10 transition-colors"
+                                    >
+                                        <ChevronLeft className="w-5 h-5 text-white/60" />
+                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        {testimonials.map((_, i) => (
+                                            <button
+                                                key={i}
+                                                onClick={() => setCurrentTestimonial(i)}
+                                                className={`w-2 h-2 rounded-full transition-all ${i === currentTestimonial ? 'bg-primary w-6' : 'bg-white/20'}`}
+                                            />
+                                        ))}
+                                    </div>
+                                    <button
+                                        onClick={() => setCurrentTestimonial(prev => (prev + 1) % testimonials.length)}
+                                        className="p-2 glass-card rounded-full hover:bg-white/10 transition-colors"
+                                    >
+                                        <ChevronRight className="w-5 h-5 text-white/60" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* CTA Section */}
             <section className="py-20 px-6">
@@ -233,7 +528,7 @@ const LandingPage = () => {
                         Ready to Ace Your Interviews?
                     </h2>
                     <p className="text-xl text-white/60 mb-10">
-                        Join thousands of developers who landed their dream jobs
+                        Join developers who are building real interview skills with data-driven preparation
                     </p>
                     <motion.button
                         whileHover={{ scale: 1.05 }}
@@ -249,7 +544,7 @@ const LandingPage = () => {
             {/* Footer */}
             <footer className="py-8 px-6 border-t border-white/10">
                 <div className="max-w-7xl mx-auto text-center text-white/40">
-                    <p>© 2026 DSA Revision System. Built for developers, by developers.</p>
+                    <p>© 2026 FAANG Forge. Built for developers, by developers.</p>
                 </div>
             </footer>
         </div>

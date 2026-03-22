@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus,
     Calendar,
@@ -10,9 +10,13 @@ import {
     ArrowRight,
     Code2,
     Activity,
-    BarChart3
+    BarChart3,
+    MessageCircle,
+    Star,
+    X
 } from 'lucide-react';
-import { fetchReminders, fetchAnalytics } from '../services/api';
+import { fetchReminders, fetchAnalytics, feedbackAPI } from '../services/api';
+import toast from 'react-hot-toast';
 import {
     BarChart,
     Bar,
@@ -28,6 +32,11 @@ const DashboardPage = () => {
     const [reminders, setReminders] = useState([]);
     const [analytics, setAnalytics] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showFeedback, setShowFeedback] = useState(false);
+    const [feedbackRating, setFeedbackRating] = useState(5);
+    const [feedbackMessage, setFeedbackMessage] = useState('');
+    const [feedbackRole, setFeedbackRole] = useState('');
+    const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
     useEffect(() => {
         loadDashboardData();
@@ -292,7 +301,7 @@ const DashboardPage = () => {
                 </div>
             </div>
 
-            {/* Floating Action Button */}
+            {/* Floating Action Buttons */}
             <motion.button
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -305,6 +314,129 @@ const DashboardPage = () => {
                     Add New Problem
                 </span>
             </motion.button>
+
+            {/* Feedback FAB */}
+            <motion.button
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.7, type: 'spring' }}
+                onClick={() => setShowFeedback(true)}
+                className="fixed bottom-8 left-8 w-14 h-14 bg-gradient-to-br from-pink-500 to-rose-600 rounded-full shadow-lg shadow-rose-600/25 flex items-center justify-center hover:scale-105 transition-all duration-200 z-50 group"
+            >
+                <MessageCircle size={22} className="text-white" />
+                <span className="absolute left-20 bg-[#1a1a1c] text-white text-sm font-medium px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-white/[0.06] pointer-events-none">
+                    Leave Feedback
+                </span>
+            </motion.button>
+
+            {/* Feedback Modal */}
+            <AnimatePresence>
+                {showFeedback && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+                    >
+                        <div
+                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                            onClick={() => setShowFeedback(false)}
+                        />
+                        <motion.div
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.9, y: 20 }}
+                            className="relative w-full max-w-md bg-[#111113] border border-white/10 rounded-2xl p-6 shadow-2xl"
+                        >
+                            <button
+                                onClick={() => setShowFeedback(false)}
+                                className="absolute top-4 right-4 p-1 text-slate-400 hover:text-white transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+
+                            <h3 className="text-xl font-bold text-white mb-1">Share Your Feedback</h3>
+                            <p className="text-sm text-slate-400 mb-6">Help us improve! Your review appears on our landing page.</p>
+
+                            {/* Star Rating */}
+                            <div className="mb-5">
+                                <label className="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2 block">Rating</label>
+                                <div className="flex gap-1">
+                                    {[1, 2, 3, 4, 5].map(star => (
+                                        <button
+                                            key={star}
+                                            onClick={() => setFeedbackRating(star)}
+                                            className="p-1 transition-transform hover:scale-110"
+                                        >
+                                            <Star
+                                                size={28}
+                                                className={`transition-colors ${
+                                                    star <= feedbackRating
+                                                        ? 'text-yellow-400 fill-yellow-400'
+                                                        : 'text-slate-600'
+                                                }`}
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Role */}
+                            <div className="mb-5">
+                                <label className="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2 block">Your Role</label>
+                                <input
+                                    type="text"
+                                    value={feedbackRole}
+                                    onChange={(e) => setFeedbackRole(e.target.value)}
+                                    placeholder="e.g. Software Engineer, Student"
+                                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50 transition-colors"
+                                />
+                            </div>
+
+                            {/* Message */}
+                            <div className="mb-6">
+                                <label className="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-2 block">Message</label>
+                                <textarea
+                                    value={feedbackMessage}
+                                    onChange={(e) => setFeedbackMessage(e.target.value)}
+                                    placeholder="What do you think about FAANG Forge? How has it helped you?"
+                                    rows={4}
+                                    maxLength={500}
+                                    className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/50 transition-colors resize-none"
+                                />
+                                <p className="text-right text-xs text-slate-600 mt-1">{feedbackMessage.length}/500</p>
+                            </div>
+
+                            {/* Submit */}
+                            <button
+                                disabled={!feedbackMessage.trim() || submittingFeedback}
+                                onClick={async () => {
+                                    setSubmittingFeedback(true);
+                                    try {
+                                        await feedbackAPI.submit({
+                                            rating: feedbackRating,
+                                            message: feedbackMessage.trim(),
+                                            role: feedbackRole.trim() || 'Developer'
+                                        });
+                                        toast.success('Thank you for your feedback! 🎉');
+                                        setShowFeedback(false);
+                                        setFeedbackMessage('');
+                                        setFeedbackRating(5);
+                                        setFeedbackRole('');
+                                    } catch (err) {
+                                        toast.error('Failed to submit feedback. Try again.');
+                                    } finally {
+                                        setSubmittingFeedback(false);
+                                    }
+                                }}
+                                className="w-full py-3 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-semibold text-white transition-colors"
+                            >
+                                {submittingFeedback ? 'Submitting...' : 'Submit Feedback'}
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

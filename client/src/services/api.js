@@ -150,4 +150,36 @@ export const systemDesignAPI = {
     }
 };
 
+// Platform Stats API (public - no auth required)
+export const platformAPI = {
+    getStats: async () => {
+        const response = await api.get('/platform/stats');
+        return response.data;
+    },
+
+    getLeaderboard: async () => {
+        const response = await api.get('/platform/leaderboard');
+        return response.data;
+    }
+};
+
+// Feedback API
+export const feedbackAPI = {
+    submit: async (feedbackData) => {
+        const response = await api.post('/feedback', feedbackData);
+        return response.data;
+    },
+
+    getApproved: async () => {
+        const response = await api.get('/feedback/approved');
+        return response.data;
+    },
+
+    getMine: async () => {
+        const response = await api.get('/feedback/mine');
+        return response.data;
+    }
+};
+
 export default api;
+

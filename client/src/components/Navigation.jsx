@@ -18,7 +18,9 @@ import {
     User,
     Menu,
     X,
-    Layers // For Custom Lists
+    Layers,
+    Trophy,
+    Share2
 } from 'lucide-react';
 
 const Navigation = () => {
@@ -43,6 +45,8 @@ const Navigation = () => {
         { path: '/behavioral', label: 'Behavioral', icon: Star },
         { path: '/companies', label: 'Companies', icon: Building2 },
         { path: '/analytics', label: 'Analytics', icon: BarChart3 },
+        { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+        { path: '/profile-card', label: 'Share Profile', icon: Share2 },
     ];
 
     return (

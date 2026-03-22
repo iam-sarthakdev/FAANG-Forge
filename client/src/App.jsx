@@ -19,6 +19,8 @@ import FundamentalsPage from './pages/FundamentalsPage';
 import BehavioralPage from './pages/BehavioralPage';
 import LeetCodeSettings from './pages/LeetCodeSettings';
 import CuratedListsPage from './pages/CuratedListPage';
+import LeaderboardPage from './pages/LeaderboardPage';
+import ProfileCardPage from './pages/ProfileCardPage';
 import PageLayout from './components/PageLayout';
 
 import './index.css';
@@ -149,6 +151,20 @@ function AppRoutes() {
                 <ProtectedRoute>
                     <PageLayout>
                         <CuratedListsPage />
+                    </PageLayout>
+                </ProtectedRoute>
+            } />
+            <Route path="/leaderboard" element={
+                <ProtectedRoute>
+                    <PageLayout>
+                        <LeaderboardPage />
+                    </PageLayout>
+                </ProtectedRoute>
+            } />
+            <Route path="/profile-card" element={
+                <ProtectedRoute>
+                    <PageLayout>
+                        <ProfileCardPage />
                     </PageLayout>
                 </ProtectedRoute>
             } />
