@@ -36,18 +36,77 @@ const Navigation = () => {
         setIsMobileMenuOpen(false);
     };
 
-    const navItems = [
+    const mainNav = [
         { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { path: '/dsa-sheets', label: 'DSA Sheets', icon: FileText },
         { path: '/problems', label: 'Questions', icon: BookOpen },
+        { path: '/dsa-sheets', label: 'DSA Sheets', icon: FileText },
+    ];
+
+    const exploreGroup = [
         { path: '/fundamentals', label: 'Fundamentals', icon: Cpu },
         { path: '/system-design', label: 'System Design', icon: Network },
         { path: '/behavioral', label: 'Behavioral', icon: Star },
         { path: '/companies', label: 'Companies', icon: Building2 },
+    ];
+
+    const statsGroup = [
         { path: '/analytics', label: 'Analytics', icon: BarChart3 },
         { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
         { path: '/profile-card', label: 'Share Profile', icon: Share2 },
     ];
+
+    const [openDropdown, setOpenDropdown] = useState(null);
+
+    const NavDropdown = ({ label, items, id }) => {
+        const isActive = items.some(i => location.pathname === i.path);
+        const isOpen = openDropdown === id;
+        
+        return (
+            <div 
+                className="relative group" 
+                onMouseEnter={() => setOpenDropdown(id)}
+                onMouseLeave={() => setOpenDropdown(null)}
+            >
+                <div className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium cursor-pointer transition-all duration-300
+                    ${isActive || isOpen
+                        ? 'text-white bg-white/10'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                >
+                    <span>{label}</span>
+                    <ChevronDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180 text-violet-400' : ''}`} />
+                </div>
+
+                <AnimatePresence>
+                    {isOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 5 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute top-full left-0 mt-2 w-48 py-2 rounded-xl bg-[#121214]/95 backdrop-blur-xl border border-white/10 shadow-xl overflow-hidden z-50"
+                        >
+                            {items.map(item => {
+                                const Icon = item.icon;
+                                const isItemActive = location.pathname === item.path;
+                                return (
+                                    <Link
+                                        key={item.path}
+                                        to={item.path}
+                                        className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors
+                                            ${isItemActive ? 'text-violet-400 bg-violet-500/10' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
+                                    >
+                                        <Icon size={16} />
+                                        {item.label}
+                                    </Link>
+                                );
+                            })}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+        );
+    };
 
     return (
         <nav className="sticky top-0 z-50 w-full border-b border-white/5 bg-[#0a0a0b]/80 backdrop-blur-xl">
@@ -168,17 +227,12 @@ const Navigation = () => {
                 </div>
 
                 {/* Desktop Navigation Links */}
-                <div className="hidden lg:flex items-center gap-1 mx-6 lg:order-2">
-                    {navItems.map((item) => {
+                <div className="hidden lg:flex items-center gap-2 mx-6 lg:order-2 flex-col lg:flex-row">
+                    {mainNav.map((item) => {
                         const Icon = item.icon;
                         const isActive = location.pathname === item.path;
-
                         return (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className="relative group"
-                            >
+                            <Link key={item.path} to={item.path} className="relative group">
                                 <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300
                                     ${isActive
                                         ? 'text-white bg-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]'
@@ -189,14 +243,16 @@ const Navigation = () => {
                                     <span>{item.label}</span>
                                 </div>
                                 {isActive && (
-                                    <motion.div
-                                        layoutId="navbar-indicator"
-                                        className="absolute bottom-[-17px] left-0 right-0 h-[2px] bg-gradient-to-r from-violet-500 to-fuchsia-500 shadow-[0_-2px_10px_rgba(139,92,246,0.5)]"
-                                    />
+                                    <motion.div layoutId="navbar-indicator" className="absolute bottom-[-17px] left-0 right-0 h-[2px] bg-gradient-to-r from-violet-500 to-fuchsia-500 shadow-[0_-2px_10px_rgba(139,92,246,0.5)]" />
                                 )}
                             </Link>
                         );
                     })}
+                    
+                    <div className="hidden lg:block w-px h-6 bg-white/10 mx-2" />
+                    
+                    <NavDropdown label="Explore" items={exploreGroup} id="explore" />
+                    <NavDropdown label="Stats" items={statsGroup} id="stats" />
                 </div>
 
                 {/* Mobile Menu Overlay */}
@@ -225,7 +281,7 @@ const Navigation = () => {
                                 </div>
 
                                 {/* Nav Items */}
-                                {navItems.map((item) => {
+                                {[...mainNav, ...exploreGroup, ...statsGroup].map((item) => {
                                     const Icon = item.icon;
                                     const isActive = location.pathname === item.path;
                                     return (

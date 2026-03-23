@@ -11,33 +11,29 @@ export const getAnalytics = async (req, res, next) => {
         // Total solved problems - filtered by user
         const totalSolved = await Problem.countDocuments({ user_id: userId, isSolved: true });
 
-        // Group by difficulty - filtered by user
+        // Group by difficulty - ONLY SOLVED user problems
         const difficultyAgg = await Problem.aggregate([
-            { $match: { user_id: userId } },
+            { $match: { user_id: userId, isSolved: true } },
             {
                 $group: {
                     _id: '$difficulty',
                     count: { $sum: 1 }
                 }
-            },
-            {
-                $sort: {
-                    _id: 1
-                }
             }
         ]);
 
-        const byDifficulty = difficultyAgg.reduce((acc, item) => {
-            acc[item._id] = item.count;
-            return acc;
-        }, {});
+        const byDifficulty = { Easy: 0, Medium: 0, Hard: 0 };
+        difficultyAgg.forEach(item => {
+            if (!item._id) return;
+            // Normalize caching (e.g. "easy" -> "Easy")
+            const diff = item._id.toString().toLowerCase();
+            if (diff === 'easy') byDifficulty.Easy += item.count;
+            else if (diff === 'medium') byDifficulty.Medium += item.count;
+            else if (diff === 'hard') byDifficulty.Hard += item.count;
+            else byDifficulty.Medium += item.count; // fallback 
+        });
 
-        // Ensure all difficulties exist
-        if (!byDifficulty.Easy) byDifficulty.Easy = 0;
-        if (!byDifficulty.Medium) byDifficulty.Medium = 0;
-        if (!byDifficulty.Hard) byDifficulty.Hard = 0;
-
-        // Group by topic - filtered by user
+        // Group by topic - filtered by user (Top 5 topics)
         const topicAgg = await Problem.aggregate([
             { $match: { user_id: userId } },
             {

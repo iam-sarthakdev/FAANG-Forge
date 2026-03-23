@@ -200,15 +200,15 @@ const ProfileCardPage = () => {
                                     <>
                                         <div
                                             className="h-full bg-green-500 rounded-l-full"
-                                            style={{ width: `${((analytics?.by_difficulty?.Easy || 0) / analytics.total_problems) * 100}%` }}
+                                            style={{ width: `${((analytics?.by_difficulty?.Easy || 0) / (analytics.total_solved || analytics.total_problems || 1)) * 100}%` }}
                                         />
                                         <div
                                             className="h-full bg-yellow-500"
-                                            style={{ width: `${((analytics?.by_difficulty?.Medium || 0) / analytics.total_problems) * 100}%` }}
+                                            style={{ width: `${((analytics?.by_difficulty?.Medium || 0) / (analytics.total_solved || analytics.total_problems || 1)) * 100}%` }}
                                         />
                                         <div
                                             className="h-full bg-red-500 rounded-r-full"
-                                            style={{ width: `${((analytics?.by_difficulty?.Hard || 0) / analytics.total_problems) * 100}%` }}
+                                            style={{ width: `${((analytics?.by_difficulty?.Hard || 0) / (analytics.total_solved || analytics.total_problems || 1)) * 100}%` }}
                                         />
                                     </>
                                 )}
