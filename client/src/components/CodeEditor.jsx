@@ -46,7 +46,7 @@ const CodeEditor = ({ language, value, onChange, theme = 'vs-dark', height = '10
                 cursorBlinking: 'smooth',
                 cursorSmoothCaretAnimation: 'on',
                 formatOnPaste: true,
-                padding: { top: 16 }
+                padding: { top: 0 }
             }}
             loading={
                 <div className="flex h-full w-full items-center justify-center text-white/50 bg-[#151517]">

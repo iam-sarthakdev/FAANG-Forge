@@ -1,26 +1,20 @@
-import axios from 'axios';
-
-const PISTON_API_URL = 'https://emkc.org/api/v2/piston/execute';
+import api from './api';
 
 export const LANGUAGE_VERSIONS = {
-    javascript: "*",
-    python: "*",
-    java: "*",
-    cpp: "*",
-    c: "*"
+    javascript: "Node.js",
+    python: "Python 3",
+    java: "Java (OpenJDK)",
+    cpp: "C++ (GCC)",
+    c: "C (GCC)"
 };
 
 export const executeCode = async (language, sourceCode, stdin = "") => {
-    const version = LANGUAGE_VERSIONS[language] || "*";
-    
     try {
-        const response = await axios.post(PISTON_API_URL, {
+        const response = await api.post('/compiler/execute', {
             language,
-            version,
-            files: [{ content: sourceCode }],
+            sourceCode,
             stdin
         });
-        
         return response.data;
     } catch (error) {
         console.error("Code Execution Error:", error);

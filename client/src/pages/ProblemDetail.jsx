@@ -3,6 +3,10 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Trash2, Copy, Check, Calendar, Code, FileText, Clock, Box, ExternalLink, RefreshCw, Tag, Edit2, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CodeEditor from '../components/CodeEditor';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { executeCode, LANGUAGE_VERSIONS } from '../services/compilerApi';
 import { Play } from 'lucide-react';
 import { fetchProblemById, updateProblem, deleteProblem, createProblem, markAsRevised, fetchPatterns } from '../services/api';
@@ -32,6 +36,7 @@ const ProblemDetail = () => {
     const [consoleOutput, setConsoleOutput] = useState('');
     const [customInput, setCustomInput] = useState('');
     const [showConsole, setShowConsole] = useState(false);
+    const [editNotesMode, setEditNotesMode] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -569,20 +574,61 @@ const ProblemDetail = () => {
                         {/* Editor Content */}
                         <div className="flex-1 bg-[#151517] relative">
                             {activeTab === 'notes' ? (
-                                <div className="w-full h-full flex flex-col">
-                                    {/* LeetCode Auto-populate Button */}
-
+                                <div className="w-full h-full flex flex-col relative bg-[#151517]">
                                     {leetCodeError && (
                                         <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/20 text-red-400 text-sm">
                                             {leetCodeError}
                                         </div>
                                     )}
-                                    <textarea
-                                        className="flex-1 w-full bg-transparent p-6 text-white/90 leading-relaxed outline-none resize-none font-sans"
-                                        placeholder="# Approach & Thoughts..."
-                                        value={formData.notes}
-                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                    />
+                                    <div className="flex items-center justify-between px-4 py-2 bg-[#1E1E1E] border-b border-white/10 shrink-0 z-10">
+                                        <span className="text-xs text-white/50">My Notes (Markdown)</span>
+                                        <button 
+                                            onClick={() => setEditNotesMode(!editNotesMode)}
+                                            className="text-xs px-2 py-1 bg-white/5 hover:bg-white/10 text-white rounded flex items-center transition-colors"
+                                        >
+                                            {editNotesMode ? <Check size={12} className="mr-1"/> : <Edit2 size={12} className="mr-1"/>}
+                                            {editNotesMode ? 'Done' : 'Edit'}
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 overflow-auto relative">
+                                        {(!formData.notes || editNotesMode) ? (
+                                            <textarea
+                                                className="w-full h-full bg-transparent p-6 text-white/90 leading-relaxed outline-none resize-none font-sans"
+                                                placeholder="# Approach & Thoughts..."
+                                                value={formData.notes || ''}
+                                                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                                onFocus={() => setEditNotesMode(true)}
+                                            />
+                                        ) : (
+                                            <div className="p-6 prose-custom prose-invert max-w-none">
+                                                <ReactMarkdown
+                                                    remarkPlugins={[remarkGfm]}
+                                                    components={{
+                                                        code({node, inline, className, children, ...props}) {
+                                                            const match = /language-(\w+)/.exec(className || '')
+                                                            return !inline && match ? (
+                                                                <SyntaxHighlighter
+                                                                    style={vscDarkPlus}
+                                                                    language={match[1]}
+                                                                    PreTag="div"
+                                                                    className="rounded-lg !bg-[#1E1E1E] !p-4 !my-4"
+                                                                    {...props}
+                                                                >
+                                                                    {String(children).replace(/\n$/, '')}
+                                                                </SyntaxHighlighter>
+                                                            ) : (
+                                                                <code className="bg-white/10 text-primary px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+                                                                    {children}
+                                                                </code>
+                                                            )
+                                                        }
+                                                    }}
+                                                >
+                                                    {formData.notes}
+                                                </ReactMarkdown>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="flex-1 overflow-hidden h-full flex flex-col relative text-sm">

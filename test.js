@@ -1,4 +1,13 @@
-fetch('https://emkc.org/api/v2/piston/runtimes')
-    .then(res => res.json())
-    .then(data => console.log(data.slice(0, 5)))
-    .catch(console.error);
+const data = {
+    code: `public class Main { public static void main(String[] args) { System.out.println("Hello from Codex!"); } }`,
+    language: 'java'
+};
+
+fetch('https://api.codex.jaagrav.in', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+})
+.then(res => res.json())
+.then(console.log)
+.catch(console.error);
