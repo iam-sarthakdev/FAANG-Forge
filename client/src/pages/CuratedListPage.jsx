@@ -833,7 +833,7 @@ const CuratedListsPage = () => {
                                                 <Layers className="text-violet-400" size={28} />}
                                     </div>
 
-                                    <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-violet-200 transition-colors">{l.name}</h3>
+                                    <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-violet-200 transition-colors">{l.name === "Sarthak's List" ? "Sarthak's Masterlist" : l.name}</h3>
                                     <p className="text-slate-400 text-sm mb-6 line-clamp-2">{l.description || 'No description available.'}</p>
 
                                     <div className="flex items-center justify-between mt-auto">
@@ -900,7 +900,7 @@ const CuratedListsPage = () => {
                         <span className="text-xs font-semibold text-slate-200 tracking-widest uppercase">Official DSA Curriculum</span>
                     </div>
                     <h1 className="text-3xl md:text-5xl font-bold text-white mb-2 tracking-tight">
-                        {list.name}
+                        {list.name === "Sarthak's List" ? "Sarthak's Masterlist" : list.name}
                     </h1>
                 </div>
 
