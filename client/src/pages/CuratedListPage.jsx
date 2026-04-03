@@ -962,7 +962,7 @@ const CuratedListsPage = () => {
                     🏆 FEATURED MASTERLISTS — Premium curated interview lists
                     Only shown when viewing Sarthak's Masterlist
                    ═══════════════════════════════════════════════════════════════ */}
-                {list?.name === "Sarthak's Masterlist" && (
+                {(list?.name === "Sarthak's Masterlist" || list?.name === "Sarthak's List") && (
                     <div className="mb-12">
                         {/* Section Header */}
                         <div className="flex items-center gap-3 mb-6">
