@@ -4,7 +4,7 @@ import {
     ChevronDown, CheckCircle, Circle,
     ExternalLink, Plus, Trophy, Layers, Trash2, Github, Globe, Sparkles,
     Lock, ArrowUp, ArrowDown, RefreshCw, ArrowUpDown, GripVertical,
-    Code2, Tag, X, Save, Building2
+    Code2, Tag, X, Save, Building2, Crown, Search, Star, Zap, Filter
 } from 'lucide-react';
 import Editor from 'react-simple-code-editor';
 import Prism from 'prismjs';
@@ -35,6 +35,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 import listService from '../services/listService';
 import { useAuth } from '../context/AuthContext';
+import { MASTERLISTS } from '../data/masterlistData';
 
 // --- Sortable Item Components ---
 
@@ -318,6 +319,11 @@ const CuratedListsPage = () => {
     const [codeLang, setCodeLang] = useState('cpp');
     const [codeSaving, setCodeSaving] = useState(false);
 
+    // Featured Masterlists
+    const [activeMasterlist, setActiveMasterlist] = useState(null);
+    const [masterlistSearch, setMasterlistSearch] = useState('');
+    const [masterlistDiffFilter, setMasterlistDiffFilter] = useState('All');
+
     useEffect(() => {
         fetchAllLists();
     }, []);
@@ -346,7 +352,7 @@ const CuratedListsPage = () => {
         try {
             const data = await listService.getLists();
             setAllLists(data);
-            // If "Sarthak's List" is the only one, maybe auto-open it? 
+            // If "Sarthak's Masterlist" is the only one, maybe auto-open it? 
             // But user wants Dashboard now. 
         } catch (err) {
             console.error("Error fetching lists:", err);
@@ -951,6 +957,323 @@ const CuratedListsPage = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* ═══════════════════════════════════════════════════════════════
+                    🏆 FEATURED MASTERLISTS — Premium curated interview lists
+                    Only shown when viewing Sarthak's Masterlist
+                   ═══════════════════════════════════════════════════════════════ */}
+                {list?.name === "Sarthak's Masterlist" && (
+                    <div className="mb-12">
+                        {/* Section Header */}
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center border border-amber-500/20 shadow-lg shadow-amber-500/5">
+                                <Crown size={20} className="text-amber-400" />
+                            </div>
+                            <div>
+                                <h2 className="text-2xl font-bold text-white tracking-tight">Featured Masterlists</h2>
+                                <p className="text-xs text-slate-500 mt-0.5">Hand-curated interview-ready problem collections</p>
+                            </div>
+                        </div>
+
+                        {/* Masterlist Cards Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                            {MASTERLISTS.map((ml, idx) => {
+                                const easyCount = ml.problems.filter(p => p.difficulty === 'Easy').length;
+                                const medCount = ml.problems.filter(p => p.difficulty === 'Medium').length;
+                                const hardCount = ml.problems.filter(p => p.difficulty === 'Hard').length;
+
+                                return (
+                                    <motion.div
+                                        key={ml.id}
+                                        initial={{ opacity: 0, y: 24 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: idx * 0.12, type: 'spring', stiffness: 120 }}
+                                        onClick={() => { setActiveMasterlist(ml); setMasterlistSearch(''); setMasterlistDiffFilter('All'); }}
+                                        className="group relative cursor-pointer rounded-2xl overflow-hidden"
+                                        style={{
+                                            background: 'linear-gradient(145deg, rgba(17,17,19,0.95), rgba(17,17,19,0.7))',
+                                        }}
+                                    >
+                                        {/* Gradient border effect */}
+                                        <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                                            style={{
+                                                background: `linear-gradient(135deg, ${ml.accentFrom}22, transparent 50%, ${ml.accentTo}22)`,
+                                            }}
+                                        />
+                                        <div className="absolute inset-[1px] rounded-2xl"
+                                            style={{ background: 'linear-gradient(145deg, rgba(17,17,19,0.97), rgba(17,17,19,0.85))' }}
+                                        />
+
+                                        {/* Glow effect on hover */}
+                                        <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-3xl"
+                                            style={{ background: ml.accentGlow }}
+                                        />
+
+                                        <div className="relative z-10 p-6">
+                                            {/* Icon + Badge */}
+                                            <div className="flex items-start justify-between mb-5">
+                                                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl border border-white/[0.06] shadow-lg"
+                                                    style={{ background: `linear-gradient(135deg, ${ml.accentFrom}15, ${ml.accentTo}15)` }}
+                                                >
+                                                    {ml.icon}
+                                                </div>
+                                                <div className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border"
+                                                    style={{
+                                                        color: ml.accentFrom,
+                                                        borderColor: `${ml.accentFrom}30`,
+                                                        background: `${ml.accentFrom}08`
+                                                    }}
+                                                >
+                                                    {ml.problems.length} Problems
+                                                </div>
+                                            </div>
+
+                                            {/* Title */}
+                                            <h3 className="text-xl font-bold text-white mb-1 group-hover:text-transparent group-hover:bg-clip-text transition-all duration-300"
+                                                style={{ '--tw-gradient-from': ml.accentFrom, '--tw-gradient-to': ml.accentTo }}
+                                            >
+                                                <span className="group-hover:hidden">{ml.name}</span>
+                                                <span className="hidden group-hover:inline bg-gradient-to-r bg-clip-text text-transparent"
+                                                    style={{ backgroundImage: `linear-gradient(to right, ${ml.accentFrom}, ${ml.accentTo})` }}
+                                                >{ml.name}</span>
+                                            </h3>
+                                            <p className="text-sm text-slate-500 mb-5 leading-relaxed">{ml.subtitle}</p>
+
+                                            {/* Difficulty Breakdown Mini Bar */}
+                                            <div className="flex items-center gap-1.5 mb-4">
+                                                <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-white/[0.04] flex">
+                                                    <div className="h-full bg-green-500 transition-all duration-700" style={{ width: `${(easyCount / ml.problems.length) * 100}%` }} />
+                                                    <div className="h-full bg-yellow-500 transition-all duration-700" style={{ width: `${(medCount / ml.problems.length) * 100}%` }} />
+                                                    <div className="h-full bg-red-500 transition-all duration-700" style={{ width: `${(hardCount / ml.problems.length) * 100}%` }} />
+                                                </div>
+                                            </div>
+
+                                            {/* Difficulty Tags */}
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/15">
+                                                    {easyCount} Easy
+                                                </span>
+                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-yellow-500/10 text-yellow-400 border border-yellow-500/15">
+                                                    {medCount} Med
+                                                </span>
+                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/15">
+                                                    {hardCount} Hard
+                                                </span>
+                                                <div className="ml-auto">
+                                                    <div className="w-7 h-7 rounded-lg bg-white/[0.04] flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                                                        <ExternalLink size={12} className="text-slate-500 group-hover:text-white transition-colors" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {/* ═══════════════════════════════════════════════════════════════
+                    📋 MASTERLIST DETAIL MODAL — Full problem table overlay
+                   ═══════════════════════════════════════════════════════════════ */}
+                <AnimatePresence>
+                    {activeMasterlist && (
+                        <div className="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto">
+                            <div className="absolute inset-0 bg-black/90 backdrop-blur-2xl" onClick={() => setActiveMasterlist(null)} />
+                            <motion.div
+                                initial={{ opacity: 0, y: 40, scale: 0.97 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 40, scale: 0.97 }}
+                                transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+                                className="relative z-10 w-full max-w-4xl mx-4 my-8 rounded-3xl overflow-hidden border border-white/[0.06]"
+                                style={{ background: 'linear-gradient(180deg, #111113 0%, #0a0a0c 100%)' }}
+                            >
+                                {/* Modal Header */}
+                                <div className="relative px-8 pt-8 pb-6">
+                                    {/* Gradient accent line */}
+                                    <div className="absolute top-0 left-0 right-0 h-[2px]"
+                                        style={{ background: `linear-gradient(to right, ${activeMasterlist.accentFrom}, ${activeMasterlist.accentTo})` }}
+                                    />
+
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-center gap-5">
+                                            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl border border-white/[0.08] shadow-xl"
+                                                style={{ background: `linear-gradient(135deg, ${activeMasterlist.accentFrom}18, ${activeMasterlist.accentTo}18)` }}
+                                            >
+                                                {activeMasterlist.icon}
+                                            </div>
+                                            <div>
+                                                <h2 className="text-3xl font-bold text-transparent bg-clip-text"
+                                                    style={{ backgroundImage: `linear-gradient(to right, ${activeMasterlist.accentFrom}, ${activeMasterlist.accentTo})` }}
+                                                >
+                                                    {activeMasterlist.name}
+                                                </h2>
+                                                <p className="text-sm text-slate-400 mt-1">{activeMasterlist.subtitle}</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => setActiveMasterlist(null)}
+                                            className="p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                                        >
+                                            <X size={20} />
+                                        </button>
+                                    </div>
+
+                                    {/* Stats Row */}
+                                    <div className="flex items-center gap-4 mt-5">
+                                        {(() => {
+                                            const easy = activeMasterlist.problems.filter(p => p.difficulty === 'Easy').length;
+                                            const med = activeMasterlist.problems.filter(p => p.difficulty === 'Medium').length;
+                                            const hard = activeMasterlist.problems.filter(p => p.difficulty === 'Hard').length;
+                                            return (
+                                                <>
+                                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                                                        <span className="text-xs text-slate-400 font-medium">{activeMasterlist.problems.length} total</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-500/[0.06] border border-green-500/15">
+                                                        <div className="w-2 h-2 rounded-full bg-green-500" />
+                                                        <span className="text-xs text-green-400 font-semibold">{easy} Easy</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-yellow-500/[0.06] border border-yellow-500/15">
+                                                        <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                                                        <span className="text-xs text-yellow-400 font-semibold">{med} Medium</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/[0.06] border border-red-500/15">
+                                                        <div className="w-2 h-2 rounded-full bg-red-500" />
+                                                        <span className="text-xs text-red-400 font-semibold">{hard} Hard</span>
+                                                    </div>
+                                                </>
+                                            );
+                                        })()}
+                                    </div>
+
+                                    {/* Search + Filter Bar */}
+                                    <div className="flex items-center gap-3 mt-5">
+                                        <div className="flex-1 relative">
+                                            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                                            <input
+                                                value={masterlistSearch}
+                                                onChange={(e) => setMasterlistSearch(e.target.value)}
+                                                placeholder="Search problems..."
+                                                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-sm text-white placeholder:text-slate-600 focus:border-white/15 focus:outline-none transition-colors"
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                                            {['All', 'Easy', 'Medium', 'Hard'].map(d => (
+                                                <button
+                                                    key={d}
+                                                    onClick={() => setMasterlistDiffFilter(d)}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${masterlistDiffFilter === d
+                                                        ? d === 'Easy' ? 'bg-green-500/20 text-green-400'
+                                                            : d === 'Medium' ? 'bg-yellow-500/20 text-yellow-400'
+                                                                : d === 'Hard' ? 'bg-red-500/20 text-red-400'
+                                                                    : 'bg-white/10 text-white'
+                                                        : 'text-slate-500 hover:text-slate-300'
+                                                        }`}
+                                                >
+                                                    {d}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Problem Table */}
+                                <div className="px-8 pb-8 max-h-[60vh] overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
+                                    <div className="space-y-1">
+                                        {/* Table Header */}
+                                        <div className="flex items-center px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-600 border-b border-white/[0.04]">
+                                            <span className="w-10 text-center">#</span>
+                                            <span className="flex-1 ml-3">Problem</span>
+                                            <span className="w-20 text-center">Difficulty</span>
+                                            <span className="w-24 text-center">Platform</span>
+                                            <span className="w-12 text-center">Link</span>
+                                        </div>
+
+                                        {activeMasterlist.problems
+                                            .filter(p => {
+                                                const matchSearch = p.title.toLowerCase().includes(masterlistSearch.toLowerCase());
+                                                const matchDiff = masterlistDiffFilter === 'All' || p.difficulty === masterlistDiffFilter;
+                                                return matchSearch && matchDiff;
+                                            })
+                                            .map((problem, idx) => (
+                                                <motion.div
+                                                    key={`${activeMasterlist.id}-${idx}`}
+                                                    initial={{ opacity: 0, x: -8 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: Math.min(idx * 0.015, 0.5) }}
+                                                    className="group/row flex items-center px-4 py-3 rounded-xl hover:bg-white/[0.02] transition-colors"
+                                                >
+                                                    {/* Number */}
+                                                    <span className="w-10 text-center text-xs font-mono text-slate-600 group-hover/row:text-slate-400 transition-colors">
+                                                        {String(idx + 1).padStart(2, '0')}
+                                                    </span>
+
+                                                    {/* Problem Name */}
+                                                    <a
+                                                        href={problem.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex-1 ml-3 text-sm font-medium text-slate-200 hover:text-white group-hover/row:text-white transition-colors truncate"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        {problem.title}
+                                                    </a>
+
+                                                    {/* Difficulty Badge */}
+                                                    <div className="w-20 flex justify-center">
+                                                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${
+                                                            problem.difficulty === 'Easy'
+                                                                ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                                                                : problem.difficulty === 'Medium'
+                                                                    ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                                                                    : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                                        }`}>
+                                                            {problem.difficulty}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Platform */}
+                                                    <div className="w-24 flex justify-center">
+                                                        <span className="text-[10px] font-medium px-2.5 py-1 rounded-md bg-white/[0.03] text-slate-400 border border-white/[0.06] flex items-center gap-1.5">
+                                                            {problem.platform === 'LeetCode' ? <Globe size={10} /> : <Globe size={10} />}
+                                                            {problem.platform}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Link */}
+                                                    <div className="w-12 flex justify-center">
+                                                        <a
+                                                            href={problem.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="p-1.5 rounded-lg text-slate-600 hover:text-white hover:bg-white/10 transition-colors"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            <ExternalLink size={14} />
+                                                        </a>
+                                                    </div>
+                                                </motion.div>
+                                            ))
+                                        }
+
+                                        {/* Empty State */}
+                                        {activeMasterlist.problems.filter(p => {
+                                            const matchSearch = p.title.toLowerCase().includes(masterlistSearch.toLowerCase());
+                                            const matchDiff = masterlistDiffFilter === 'All' || p.difficulty === masterlistDiffFilter;
+                                            return matchSearch && matchDiff;
+                                        }).length === 0 && (
+                                            <div className="text-center py-12 text-slate-600">
+                                                <Search size={32} className="mx-auto mb-3 opacity-40" />
+                                                <p className="text-sm font-medium">No problems match your search</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
 
                 {/* Controls */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">

@@ -393,8 +393,8 @@ export const saveCode = async (req, res) => {
 
 // Hardcoded list data for seeding
 const sarthaksList = {
-    name: "Sarthak's List",
-    description: "Curated list of DSA patterns and problems.",
+    name: "Sarthak's Masterlist",
+    description: "Curated masterlist of DSA patterns, problems, and interview-ready collections.",
     sections: [
         {
             title: "Binary Search",
@@ -642,10 +642,22 @@ const sarthaksList = {
 
 export const seedDefaultLists = async (req, res) => {
     try {
+        // Migration: rename old "Sarthak's List" to "Sarthak's Masterlist" if it exists
+        const oldList = await ProblemList.findOne({ name: "Sarthak's List" });
+        if (oldList) {
+            oldList.name = sarthaksList.name;
+            oldList.description = sarthaksList.description;
+            oldList.sections = sarthaksList.sections;
+            await oldList.save();
+            res.status(200).json({ message: "List renamed and updated successfully", list: oldList });
+            return;
+        }
+
         const existingList = await ProblemList.findOne({ name: sarthaksList.name });
 
         if (existingList) {
             existingList.sections = sarthaksList.sections;
+            existingList.description = sarthaksList.description;
             await existingList.save();
             res.status(200).json({ message: "List updated successfully", list: existingList });
         } else {
