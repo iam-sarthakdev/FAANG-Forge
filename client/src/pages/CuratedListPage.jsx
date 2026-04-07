@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ChevronDown, CheckCircle, Circle,
     ExternalLink, Plus, Trophy, Layers, Trash2, Github, Globe, Sparkles,
     Lock, ArrowUp, ArrowDown, RefreshCw, ArrowUpDown, GripVertical,
-    Code2, Tag, X, Save, Building2, Crown, Search, Star, Zap, Filter
+    Code2, Tag, X, Save, Building2, Crown, Search, Star, Zap, Filter,
+    Database, Server, Cpu
 } from 'lucide-react';
 import Editor from 'react-simple-code-editor';
 import Prism from 'prismjs';
@@ -281,6 +283,7 @@ const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleT
 
 const CuratedListsPage = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const isAdmin = user?.email === 'sarthak1712005@gmail.com';
 
 
@@ -324,15 +327,19 @@ const CuratedListsPage = () => {
     const [masterlistSearch, setMasterlistSearch] = useState('');
     const [masterlistDiffFilter, setMasterlistDiffFilter] = useState('All');
 
+    // Guard ref to prevent auto-seed from running multiple times
+    const seedAttempted = useRef(false);
+
     useEffect(() => {
         fetchAllLists();
     }, []);
 
-    // --- Auto-Seed Logic for Admin ---
+    // --- Auto-Seed Logic for Admin (runs only once) ---
     useEffect(() => {
-        if (isAdmin && !loading) {
+        if (isAdmin && !loading && !seedAttempted.current) {
             const hasNeetCode = allLists.some(l => l.name.includes('NeetCode'));
-            if (!hasNeetCode) {
+            if (!hasNeetCode && allLists.length > 0) {
+                seedAttempted.current = true;
                 const seed = async () => {
                     try {
                         console.log("Auto-seeding famous lists...");
@@ -346,17 +353,16 @@ const CuratedListsPage = () => {
                 seed();
             }
         }
-    }, [isAdmin, loading, allLists]);
+    }, [isAdmin, loading]);
 
     const fetchAllLists = async () => {
         try {
+            setError(null);
             const data = await listService.getLists();
-            setAllLists(data);
-            // If "Sarthak's Masterlist" is the only one, maybe auto-open it? 
-            // But user wants Dashboard now. 
+            setAllLists(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error("Error fetching lists:", err);
-            setError("Could not load lists.");
+            setError("Could not load lists. The server may be starting up — please try again.");
         } finally {
             setLoading(false);
         }
@@ -779,14 +785,21 @@ const CuratedListsPage = () => {
     };
 
     if (loading && !list && allLists.length === 0) return (
-        <div className="min-h-screen bg-[#030014] flex items-center justify-center">
+        <div className="min-h-screen bg-[#030014] flex flex-col items-center justify-center gap-4">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-fuchsia-500"></div>
+            <p className="text-slate-500 text-sm mt-2">Loading your lists...</p>
         </div>
     );
 
     if (error) return (
-        <div className="min-h-screen bg-[#030014] flex items-center justify-center text-red-400">
-            {error}
+        <div className="min-h-screen bg-[#030014] flex flex-col items-center justify-center gap-4">
+            <p className="text-red-400 text-sm">{error}</p>
+            <button
+                onClick={() => { setLoading(true); setError(null); fetchAllLists(); }}
+                className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+                Retry
+            </button>
         </div>
     );
 
@@ -814,7 +827,12 @@ const CuratedListsPage = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="mb-6 flex items-center gap-3">
+                        <Sparkles className="text-yellow-400" size={20} />
+                        <h2 className="text-2xl font-bold text-white tracking-tight">DSA Lists</h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
                         {allLists.map((l, idx) => (
                             <motion.div
                                 key={l._id}
@@ -861,6 +879,48 @@ const CuratedListsPage = () => {
                                 <p className="text-slate-500 text-xs mt-2">Missing something? Click to fetch NeetCode/Striver lists manually.</p>
                             </motion.div>
                         )}
+                    </div>
+                    
+                    <div className="mb-6 flex items-center gap-3">
+                        <Trophy className="text-fuchsia-400" size={20} />
+                        <h2 className="text-2xl font-bold text-white tracking-tight">Interview Prep Sheets</h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[
+                            { name: 'SQL Master', desc: '10+ Patterns & Problems', icon: <Database className="text-cyan-400" size={24} />, route: '/sql-master', color: 'cyan', glow: 'bg-cyan-500' },
+                            { name: 'System Design', desc: 'Complete Video Roadmap', icon: <Server className="text-blue-400" size={24} />, route: '/sd-roadmap', color: 'blue', glow: 'bg-blue-500' },
+                            { name: 'DBMS Sheet', desc: 'Top Interview Topics', icon: <Database className="text-emerald-400" size={24} />, route: '/dbms-sheet', color: 'emerald', glow: 'bg-emerald-500' },
+                            { name: 'OS Sheet', desc: 'Core Operating Systems', icon: <Cpu className="text-purple-400" size={24} />, route: '/os-sheet', color: 'purple', glow: 'bg-purple-500' }
+                        ].map((card, idx) => (
+                            <motion.div
+                                key={card.name}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: (allLists.length + idx) * 0.05 }}
+                                onClick={() => navigate(card.route)}
+                                className={`group relative bg-[#111113] border border-white/[0.06] hover:border-${card.color}-500/20 rounded-xl p-6 cursor-pointer overflow-hidden transition-colors`}
+                            >
+                                <div className={`absolute top-0 right-0 w-32 h-32 ${card.glow}/10 rounded-full blur-[50px] group-hover:${card.glow}/20 transition-colors opacity-0 group-hover:opacity-100`} />
+                                
+                                <div className="relative z-10">
+                                    <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                                        {card.icon}
+                                    </div>
+                                    <h3 className={`text-xl font-bold text-white mb-2 group-hover:text-${card.color}-200 transition-colors`}>{card.name}</h3>
+                                    <p className="text-slate-400 text-sm mb-5">{card.desc}</p>
+                                    
+                                    <div className="flex items-center justify-between mt-auto">
+                                        <div className="text-[10px] font-bold text-slate-500 bg-white/5 px-2.5 py-1 rounded-md border border-white/5 tracking-wider uppercase">
+                                            Start Prep
+                                        </div>
+                                        <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                                            <ArrowUp className="rotate-90 text-slate-400 group-hover:text-white" size={14} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))}
                     </div>
                 </div>
             </div>

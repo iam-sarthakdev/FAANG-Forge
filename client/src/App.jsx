@@ -23,6 +23,10 @@ import LeaderboardPage from './pages/LeaderboardPage';
 import ProfileCardPage from './pages/ProfileCardPage';
 import PublicProfilePage from './pages/PublicProfilePage';
 import SettingsPage from './pages/SettingsPage';
+import SQLMasterPage from './pages/SQLMasterPage';
+import SystemDesignRoadmapPage from './pages/SystemDesignRoadmapPage';
+import DBMSSheetPage from './pages/DBMSSheetPage';
+import OSSheetPage from './pages/OSSheetPage';
 import PageLayout from './components/PageLayout';
 
 import './index.css';
@@ -179,6 +183,36 @@ function AppRoutes() {
                 <ProtectedRoute>
                     <PageLayout>
                         <ProfileCardPage />
+                    </PageLayout>
+                </ProtectedRoute>
+            } />
+
+            {/* New Interview Prep Sections */}
+            <Route path="/sql-master" element={
+                <ProtectedRoute>
+                    <PageLayout>
+                        <SQLMasterPage />
+                    </PageLayout>
+                </ProtectedRoute>
+            } />
+            <Route path="/sd-roadmap" element={
+                <ProtectedRoute>
+                    <PageLayout fullWidth>
+                        <SystemDesignRoadmapPage />
+                    </PageLayout>
+                </ProtectedRoute>
+            } />
+            <Route path="/dbms-sheet" element={
+                <ProtectedRoute>
+                    <PageLayout fullWidth>
+                        <DBMSSheetPage />
+                    </PageLayout>
+                </ProtectedRoute>
+            } />
+            <Route path="/os-sheet" element={
+                <ProtectedRoute>
+                    <PageLayout fullWidth>
+                        <OSSheetPage />
                     </PageLayout>
                 </ProtectedRoute>
             } />

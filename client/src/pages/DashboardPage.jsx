@@ -32,6 +32,7 @@ const DashboardPage = () => {
     const [reminders, setReminders] = useState([]);
     const [analytics, setAnalytics] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(null);
     const [showFeedback, setShowFeedback] = useState(false);
     const [feedbackRating, setFeedbackRating] = useState(5);
     const [feedbackMessage, setFeedbackMessage] = useState('');
@@ -44,6 +45,7 @@ const DashboardPage = () => {
 
     const loadDashboardData = async () => {
         try {
+            setLoadError(null);
             const [remindersData, analyticsData] = await Promise.all([
                 fetchReminders(),
                 fetchAnalytics()
@@ -52,6 +54,7 @@ const DashboardPage = () => {
             setAnalytics(analyticsData);
         } catch (error) {
             console.error('Failed to load dashboard:', error);
+            setLoadError('Failed to load dashboard data. The server may be starting up.');
         } finally {
             setLoading(false);
         }
@@ -89,10 +92,25 @@ const DashboardPage = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+            <div className="min-h-screen flex flex-col items-center justify-center bg-[#050505] gap-4">
                 <div className="relative">
                     <div className="w-12 h-12 border-3 border-violet-500/30 border-t-violet-500 rounded-full animate-spin"></div>
                 </div>
+                <p className="text-slate-500 text-sm">Loading dashboard...</p>
+            </div>
+        );
+    }
+
+    if (loadError) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-[#050505] gap-4">
+                <p className="text-red-400 text-sm">{loadError}</p>
+                <button
+                    onClick={() => { setLoading(true); setLoadError(null); loadDashboardData(); }}
+                    className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                    Retry
+                </button>
             </div>
         );
     }

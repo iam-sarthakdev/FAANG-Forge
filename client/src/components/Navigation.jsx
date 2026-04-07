@@ -8,6 +8,8 @@ import {
     BarChart3,
     Settings,
     LogOut,
+    Database,
+    Server,
     Building2,
     Network,
     Cpu,
@@ -43,8 +45,10 @@ const Navigation = () => {
     ];
 
     const exploreGroup = [
-        { path: '/fundamentals', label: 'Fundamentals', icon: Cpu },
-        { path: '/system-design', label: 'System Design', icon: Network },
+        { path: '/sql-master', label: 'SQL Master', icon: Database },
+        { path: '/sd-roadmap', label: 'System Design', icon: Server },
+        { path: '/dbms-sheet', label: 'DBMS Sheet', icon: Database },
+        { path: '/os-sheet', label: 'OS Sheet', icon: Cpu },
         { path: '/behavioral', label: 'Behavioral', icon: Star },
         { path: '/companies', label: 'Companies', icon: Building2 },
     ];
