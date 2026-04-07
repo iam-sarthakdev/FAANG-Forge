@@ -57,6 +57,22 @@ const SortableSectionItem = React.memo(({ section, idx, isExpanded, toggleSectio
     const [showPattern, setShowPattern] = useState(false);
     const patternData = DSA_PATTERNS[section.title]; // Array of patterns for this section
 
+    const [editingPattern, setEditingPattern] = useState(null); // stores pattern.title
+    const [editCode, setEditCode] = useState("");
+    const [customSkeletons, setCustomSkeletons] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem('faang-forge-dsa-skeletons')) || {};
+        } catch { return {}; }
+    });
+
+    const handleSaveSkeleton = (patternTitle) => {
+        const key = `${section.title}-${patternTitle}`;
+        const updated = { ...customSkeletons, [key]: editCode };
+        setCustomSkeletons(updated);
+        try { localStorage.setItem('faang-forge-dsa-skeletons', JSON.stringify(updated)); } catch {}
+        setEditingPattern(null);
+    };
+
     // Use transform to only apply drag translation without altering the base layout performance
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -169,17 +185,46 @@ const SortableSectionItem = React.memo(({ section, idx, isExpanded, toggleSectio
                                                                 <div className="w-2 h-2 rounded-full bg-yellow-400/80" />
                                                                 <div className="w-2 h-2 rounded-full bg-green-400/80" />
                                                             </div>
-                                                            <span className="text-[10px] font-mono text-slate-600 uppercase">Java</span>
+                                                            <div className="flex items-center gap-3">
+                                                                <span className="text-[10px] font-mono text-slate-600 uppercase">Java</span>
+                                                                {isAdmin && (
+                                                                    editingPattern === pattern.title ? (
+                                                                        <div className="flex gap-2">
+                                                                            <button onClick={() => setEditingPattern(null)} className="text-[10px] text-slate-400 hover:text-white transition-colors">Cancel</button>
+                                                                            <button onClick={() => handleSaveSkeleton(pattern.title)} className="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold transition-colors">Save</button>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <button onClick={() => { setEditingPattern(pattern.title); setEditCode(customSkeletons[`${section.title}-${pattern.title}`] || pattern.code); }} className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">Edit</button>
+                                                                    )
+                                                                )}
+                                                            </div>
                                                         </div>
                                                         <div className="max-h-[300px] overflow-auto custom-scrollbar bg-[#161618]">
-                                                            <SyntaxHighlighter
-                                                                language="java"
-                                                                style={vscDarkPlus}
-                                                                customStyle={{ margin: 0, padding: '12px', background: 'transparent', fontSize: '12px' }}
-                                                                wrapLines={true}
-                                                            >
-                                                                {pattern.code}
-                                                            </SyntaxHighlighter>
+                                                            {editingPattern === pattern.title ? (
+                                                                <Editor
+                                                                    value={editCode}
+                                                                    onValueChange={code => setEditCode(code)}
+                                                                    highlight={code => Prism.highlight(code, Prism.languages.java, 'java')}
+                                                                    padding={12}
+                                                                    style={{
+                                                                        fontFamily: '"Fira Code", "JetBrains Mono", monospace',
+                                                                        fontSize: 12,
+                                                                        backgroundColor: 'transparent',
+                                                                        color: '#e2e8f0',
+                                                                        minHeight: '100px'
+                                                                    }}
+                                                                    className="editor-container"
+                                                                />
+                                                            ) : (
+                                                                <SyntaxHighlighter
+                                                                    language="java"
+                                                                    style={vscDarkPlus}
+                                                                    customStyle={{ margin: 0, padding: '12px', background: 'transparent', fontSize: '12px' }}
+                                                                    wrapLines={true}
+                                                                >
+                                                                    {customSkeletons[`${section.title}-${pattern.title}`] || pattern.code}
+                                                                </SyntaxHighlighter>
+                                                            )}
                                                         </div>
                                                     </div>
 

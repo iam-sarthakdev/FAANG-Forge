@@ -12,17 +12,18 @@ export const DSA_PATTERNS = {
             code: `// Use when: answer lies in range & condition is monotonic
 
 int solve(int[] arr) {
-    int low = 1, high = 1_000_000; // define search space
+    int low = 1, high = 1_000_000; // Step 1: Define search space boundaries
 
     int ans = -1;
     while (low <= high) {
-        int mid = low + (high - low) / 2;
+        int mid = low + (high - low) / 2; // Prevent integer overflow
 
         if (isPossible(arr, mid)) {
-            ans = mid; // update possible answer
-            high = mid - 1; // minimize (or maximize accordingly)
+            ans = mid; // Step 2: Record valid answer
+            high = mid - 1; // Step 3: Try to find a smaller valid answer (Minimize)
+            // Note: If maximizing, use 'low = mid + 1' instead
         } else {
-            low = mid + 1;
+            low = mid + 1; // Mid was invalid, constraint must be relaxed
         }
     }
     return ans; 
@@ -47,19 +48,23 @@ boolean isPossible(int[] arr, int mid) {
             description: "State depends only on a single shifting variable, often representing an index or current state.",
             code: `int solve(int n, int[] arr) {
     int[] dp = new int[n + 1];
-    Arrays.fill(dp, -1);
-    return memo(n - 1, arr, dp);
+    Arrays.fill(dp, -1); // Initialize memo table
+    return memo(n - 1, arr, dp); // Start from the last index representing full size
 }
 
 int memo(int index, int[] arr, int[] dp) {
-    if (index == 0) return arr[0]; // base case
-    if (index < 0) return 0;
+    // 1. Base cases (Crucial for terminating recursion)
+    if (index == 0) return arr[0]; 
+    if (index < 0) return 0; // Out of bounds
     
+    // 2. Memoization check
     if (dp[index] != -1) return dp[index];
     
-    int pick = arr[index] + memo(index - 2, arr, dp);
-    int notPick = 0 + memo(index - 1, arr, dp);
+    // 3. State transitions (Pick / Not Pick logic)
+    int pick = arr[index] + memo(index - 2, arr, dp); // Picking requires skipping adjacent
+    int notPick = 0 + memo(index - 1, arr, dp);       // Skipping allows adjacent next
     
+    // 4. Store and return optimal outcome
     return dp[index] = Math.max(pick, notPick);
 }`,
             howToIdentify: "Finding max/min ways, counting steps on arrays where the state at `i` depends strictly on `i-1`, `i-2`, etc.",
@@ -74,14 +79,20 @@ int memo(int index, int[] arr, int[] dp) {
             colorBorder: "rgba(59,130,246,0.2)",
             description: "DP where the state represents a cell `(i, j)` in a 2D matrix.",
             code: `int memo(int i, int j, int[][] grid, int[][] dp) {
-    if (i == 0 && j == 0) return grid[0][0]; // reached start
-    if (i < 0 || j < 0) return 1e9; // boundaries (for max/min problems)
+    // Base Case 1: Destination reached successfully
+    if (i == 0 && j == 0) return grid[0][0]; 
     
+    // Base Case 2: Out of bounds penalty (Avoid triggering min comparison)
+    if (i < 0 || j < 0) return (int)1e9; 
+    
+    // Memo check: If computed before, return cached result
     if (dp[i][j] != -1) return dp[i][j];
     
+    // Transition: Try moving 'Up' and 'Left' (Reverse thinking from Bottom-Right to Top-Left)
     int up = grid[i][j] + memo(i - 1, j, grid, dp);
     int left = grid[i][j] + memo(i, j - 1, grid, dp);
     
+    // Combine states optimally
     return dp[i][j] = Math.min(up, left);
 }`,
             howToIdentify: "Given a 2D grid/maze, move right or down to reach bottom-right corner while minimizing, maximizing, or counting ways.",
@@ -96,17 +107,23 @@ int memo(int index, int[] arr, int[] dp) {
             colorBorder: "rgba(168,85,247,0.2)",
             description: "Standard pick/not-pick pattern bounded by a max capacity where each item is chosen zero or one time.",
             code: `int memo(int index, int W, int[] wt, int[] val, int[][] dp) {
+    // 1. Base Case: Arrived at the final element (index 0)
     if (index == 0) {
+        // Can only pick it if its weight complies with remaining capacity
         if (wt[0] <= W) return val[0];
         return 0;
     }
     
+    // 2. Cache check
     if (dp[index][W] != -1) return dp[index][W];
     
+    // 3. Choice 1: Leave the current item
     int notTake = 0 + memo(index - 1, W, wt, val, dp);
+    
+    // 4. Choice 2: Pick the item (Bound by weight validity)
     int take = Integer.MIN_VALUE;
     if (wt[index] <= W) {
-        take = val[index] + memo(index - 1, W - wt[index], wt, val, dp);
+        take = val[index] + memo(index - 1, W - wt[index], wt, val, dp); // Move to next item
     }
     
     return dp[index][W] = Math.max(take, notTake);
@@ -123,13 +140,18 @@ int memo(int index, int[] arr, int[] dp) {
             colorBorder: "rgba(236,72,153,0.2)",
             description: "Knapsack where an item can be picked infinitely many times.",
             code: `int memo(int index, int W, int[] wt, int[] val, int[][] dp) {
+    // 1. Base Case: Reached index 0
     if (index == 0) {
-        return (W / wt[0]) * val[0];
+        // Can pick item 0 as many times as it fits perfectly
+        return (W / wt[0]) * val[0]; 
     }
     
     if (dp[index][W] != -1) return dp[index][W];
     
+    // 2. Not Pick (Move to previous item)
     int notTake = 0 + memo(index - 1, W, wt, val, dp);
+    
+    // 3. Pick (Stay at same item since we can pick infinitely)
     int take = Integer.MIN_VALUE;
     if (wt[index] <= W) {
         // Notice we do NOT do index - 1 here
@@ -150,14 +172,18 @@ int memo(int index, int[] arr, int[] dp) {
             colorBorder: "rgba(239,68,68,0.2)",
             description: "DP matching two strings index by index.",
             code: `int memo(int i, int j, String s1, String s2, int[][] dp) {
-    if (i < 0 || j < 0) return 0;
+    // Base Case: Both strings naturally exhausted
+    if (i < 0 || j < 0) return 0; 
     
-    if (dp[i][j] != -1) return dp[i][j];
+    if (dp[i][j] != -1) return dp[i][j]; // Memo Cache
     
+    // Match Condition: Elements align perfectly!
     if (s1.charAt(i) == s2.charAt(j)) {
+        // Add 1 to answer and shrink both pointers tracking sequence
         return dp[i][j] = 1 + memo(i - 1, j - 1, s1, s2, dp);
     }
     
+    // Non-Match: Compare permutations of skipping character in s1 vs skipping in s2
     return dp[i][j] = Math.max(
         memo(i - 1, j, s1, s2, dp), 
         memo(i, j - 1, s1, s2, dp)
@@ -176,14 +202,19 @@ int memo(int index, int[] arr, int[] dp) {
             description: "Finding strict increasing sequences. Usually solved in O(N^2) DP or O(N log N) using binary search.",
             code: `// O(N^2) DP Approach
 int memo(int index, int prev_index, int[] arr, int[][] dp) {
+    // 1. Base Case: Reached end of array
     if (index == arr.length) return 0;
     
+    // 2. Cache Mapping (+1 Offset handles prev_index == -1 constraint)
     if (dp[index][prev_index + 1] != -1) return dp[index][prev_index + 1];
     
-    int len = 0 + memo(index + 1, prev_index, arr, dp); // not take
+    // 3. Option A (Not Take)
+    int len = 0 + memo(index + 1, prev_index, arr, dp); 
     
+    // 4. Option B (Take) Only if current element validates strictly increasing sequence
     if (prev_index == -1 || arr[index] > arr[prev_index]) {
-        len = Math.max(len, 1 + memo(index + 1, index, arr, dp)); // take
+        // Current 'index' now becomes the new 'prev_index'
+        len = Math.max(len, 1 + memo(index + 1, index, arr, dp)); 
     }
     
     return dp[index][prev_index + 1] = len;
@@ -200,19 +231,20 @@ int memo(int index, int prev_index, int[] arr, int[][] dp) {
             colorBorder: "rgba(34,197,94,0.2)",
             description: "A state machine simulating buying, selling, or waiting on a stock market over days.",
             code: `int memo(int index, int buy, int cap, int[] prices, int[][][] dp) {
+    // Base Case: Array exhausted OR Max limit transaction reached
     if (index == prices.length || cap == 0) return 0;
     
     if (dp[index][buy][cap] != -1) return dp[index][buy][cap];
     
-    if (buy == 1) { // Allowed to buy
+    if (buy == 1) { // Authorized to Buy
         return dp[index][buy][cap] = Math.max(
-            -prices[index] + memo(index + 1, 0, cap, prices, dp), // buy
-            0 + memo(index + 1, 1, cap, prices, dp) // wait
+            -prices[index] + memo(index + 1, 0, cap, prices, dp), // Perform Buy (-price drops profit temporarily)
+            0 + memo(index + 1, 1, cap, prices, dp) // Wait out (Do nothing)
         );
-    } else { // Allowed to sell
+    } else { // Authorized to Sell
         return dp[index][buy][cap] = Math.max(
-            prices[index] + memo(index + 1, 1, cap - 1, prices, dp), // sell
-            0 + memo(index + 1, 0, cap, prices, dp) // wait
+            prices[index] + memo(index + 1, 1, cap - 1, prices, dp), // Perform Sell (+price captures profit, reduce transaction cap)
+            0 + memo(index + 1, 0, cap, prices, dp) // Wait out (Do nothing)
         );
     }
 }`,
@@ -228,17 +260,20 @@ int memo(int index, int prev_index, int[] arr, int[][] dp) {
             colorBorder: "rgba(249,115,22,0.2)",
             description: "Partitioning an array into two pieces across a range [i ... j], evaluated recursively.",
             code: `int memo(int i, int j, int[] arr, int[][] dp) {
-    if (i == j) return 0; // base case (single element/matrix)
+    // 1. Base Case: When span is invalid or just 1 element, zero cost/operations
+    if (i == j) return 0; 
     
     if (dp[i][j] != -1) return dp[i][j];
     
     int mini = Integer.MAX_VALUE;
-    // Partitioning loop
+    // 2. Partitioning Loop: 'k' acts as the split point dividing [i...j] into two
     for (int k = i; k < j; k++) {
+        // Evaluate cost = Cost of left segment + Cost of right segment + Cost of merging them
         int steps = (arr[i-1] * arr[k] * arr[j]) 
                     + memo(i, k, arr, dp) 
                     + memo(k + 1, j, arr, dp);
-        mini = Math.min(mini, steps);
+        
+        mini = Math.min(mini, steps); // Capture best split
     }
     
     return dp[i][j] = mini;
@@ -255,20 +290,32 @@ int memo(int index, int prev_index, int[] arr, int[][] dp) {
             colorBorder: "rgba(6,182,212,0.2)",
             description: "Given a string or array, partition it from the front and recursively solve the rest.",
             code: `int memo(int i, String s, int[] dp) {
+    // 1. Base Case: Reached the end of the string, sequence is fully partitioned
     if (i == s.length()) return 0;
     
     if (dp[i] != -1) return dp[i];
     
     int minCost = Integer.MAX_VALUE;
-    // Try cutting at every possible location from current index
+    
+    // 2. Try partitioning at every index 'j' starting from 'i'
     for (int j = i; j < s.length(); j++) {
+        // 3. Condition check: Is the current prefix valid?
         if (isValid(s, i, j)) {
+            // Recurse heavily on the remaining suffix, add 1 for the cut made
             int cost = 1 + memo(j + 1, s, dp);
             minCost = Math.min(minCost, cost);
         }
     }
     
     return dp[i] = minCost;
+}
+
+// Validation logic helper (e.g., palindrome check)
+boolean isValid(String s, int start, int end) {
+    while(start < end) {
+        if(s.charAt(start++) != s.charAt(end--)) return false;
+    }
+    return true; 
 }`,
             howToIdentify: "Making minimal or maximal valid partitions forming valid prefixes (Palindrome partitions, Word Break).",
             killerProblems: "LC 132 (Palindrome Partitioning II), LC 139 (Word Break)",
@@ -284,14 +331,24 @@ int memo(int index, int prev_index, int[] arr, int[][] dp) {
             colorBorder: "rgba(99,102,241,0.2)",
             description: "Two pointers starting at extreme ends of a sorted array, moving towards each other.",
             code: `int solve(int[] arr, int target) {
+    // 1. Initialize pointers at extreme boundaries
     int left = 0, right = arr.length - 1;
+    
+    // 2. Loop until pointers cross paths
     while (left < right) {
         int sum = arr[left] + arr[right];
+        
+        // 3. Condition Match
         if (sum == target) return 1;
+        
+        // 4. Shrink Window Condition
+        // If sum is too small, move left pointer rightwards to increase sum
         else if (sum < target) left++;
+        
+        // If sum is too large, move right pointer leftwards to decrease sum
         else right--;
     }
-    return 0;
+    return 0; // Target not found
 }`,
             howToIdentify: "Finding pairs/triplets in sorted arrays, checking palindromes, or dealing with sorted properties.",
             killerProblems: "LC 167 (Two Sum II), LC 15 (3Sum), LC 11 (Container With Most Water)",
@@ -310,17 +367,23 @@ int memo(int index, int prev_index, int[] arr, int[][] dp) {
     int left = 0, right = 0;
     int sum = 0, maxLen = 0;
     
+    // 1. Expand the window using the 'right' pointer
     while (right < arr.length) {
-        sum += arr[right]; // expand
+        sum += arr[right]; // Absorb element into the window
         
-        while (sum > k) { // shrink condition
-            sum -= arr[left];
-            left++;
+        // 2. Shrink Condition: Window became invalid, contract 'left'
+        while (sum > k) { 
+            sum -= arr[left]; // Remove left element contribution
+            left++;           // Slide left boundary forward
         }
         
-        if (sum == k) { // check valid
+        // 3. Validity Check: Capture optimal answer
+        if (sum == k) { 
+            // Length of array slice [left...right] is right - left + 1
             maxLen = Math.max(maxLen, right - left + 1);
         }
+        
+        // 4. Always expand the right edge
         right++;
     }
     return maxLen;
@@ -340,14 +403,22 @@ int memo(int index, int prev_index, int[] arr, int[][] dp) {
             description: "Store prefix sums logically in a map to find subarrays matching `target`.",
             code: `int subarraySum(int[] nums, int k) {
     int count = 0, sum = 0;
-    HashMap<Integer, Integer> map = new HashMap<>(); // prefix sum -> frequency
-    map.put(0, 1); // base case
+    // Map stores: (prefix_sum -> frequency of occurrence)
+    HashMap<Integer, Integer> map = new HashMap<>(); 
+    
+    // Base Case: A prefix sum of 0 has occurred exactly 1 time initially
+    map.put(0, 1); 
     
     for (int num : nums) {
-        sum += num;
+        sum += num; // Calculate running prefix sum
+        
+        // Check if removing 'k' yields a prefix sum we have seen before
+        // (sum - k = x) => (sum - x = k) indicates subarray from x to sum equals k
         if (map.containsKey(sum - k)) {
-            count += map.get(sum - k);
+            count += map.get(sum - k); // Add the frequency to the answer
         }
+        
+        // Record the current prefix sum's frequency into the map for future indices
         map.put(sum, map.getOrDefault(sum, 0) + 1);
     }
     return count;
@@ -370,13 +441,18 @@ int memo(int index, int prev_index, int[] arr, int[][] dp) {
     int[] nge = new int[n];
     Stack<Integer> st = new Stack<>();
     
-    // Traverse backwards
+    // 1. Traverse array backwards (Right to Left)
     for (int i = n - 1; i >= 0; i--) {
+        // 2. Monotonic property: Pop elements smaller/equal to current
+        // They are completely useless because the current element is closer and bigger
         while (!st.isEmpty() && st.peek() <= arr[i]) {
-            st.pop(); // remove smaller elements
+            st.pop(); 
         }
         
+        // 3. The top of the stack is now strictly the NEXT GREATER element
         nge[i] = st.isEmpty() ? -1 : st.peek();
+        
+        // 4. Push current element for the left side elements to evaluate
         st.push(arr[i]);
     }
     return nge;
@@ -395,14 +471,17 @@ int memo(int index, int prev_index, int[] arr, int[][] dp) {
             colorBorder: "rgba(132,204,22,0.2)",
             description: "Two pointers iterating at different speeds to detect cycles or find middle.",
             code: `ListNode findMiddle(ListNode head) {
-    ListNode slow = head;
-    ListNode fast = head;
+    ListNode slow = head; // Moves 1 step at a time
+    ListNode fast = head; // Moves 2 steps at a time
     
-    // Detect cycle or find middle
+    // 1. Loop until 'fast' reaches the end of the list
+    // (fast != null handles even length, fast.next != null handles odd length)
     while (fast != null && fast.next != null) {
-        slow = slow.next;
-        fast = fast.next.next;
+        slow = slow.next;        // +1
+        fast = fast.next.next;   // +2
     }
+    
+    // 2. When 'fast' is at the end, 'slow' is exactly in the middle
     return slow;
 }`,
             howToIdentify: "Finding middle node, cycle detection (Linked List / Arrays matching graphs).",
@@ -421,20 +500,25 @@ int memo(int index, int prev_index, int[] arr, int[][] dp) {
             code: `int[] maxSlidingWindow(int[] arr, int k) {
     int n = arr.length;
     int[] res = new int[n - k + 1];
-    Deque<Integer> q = new ArrayDeque<>();
+    Deque<Integer> q = new ArrayDeque<>(); // Stores INDICES, strictly decreasing by value
     
     for (int i = 0; i < n; i++) {
-        // remove out of bounds elements 
+        // 1. Evict elements that fell out of the sliding window limits
+        // 'i - k' is the index that just exited the window
         if (!q.isEmpty() && q.peekFirst() == i - k) {
             q.pollFirst();
         }
-        // maintain decreasing order
+        
+        // 2. Maintain Monotonic Decreasing Order
+        // Remove ALL elements smaller than current since they can NEVER be a window max again
         while (!q.isEmpty() && arr[q.peekLast()] <= arr[i]) {
             q.pollLast();
         }
+        
+        // 3. Add current element's index
         q.offerLast(i);
         
-        // record answer
+        // 4. Extract max (always at the front) once window hits size 'k'
         if (i >= k - 1) {
             res[i - k + 1] = arr[q.peekFirst()];
         }
@@ -455,14 +539,21 @@ int memo(int index, int prev_index, int[] arr, int[][] dp) {
             colorBorder: "rgba(96,165,250,0.2)",
             description: "Maintain a Min-Heap of size K. When over K, remove the smallest. Leaves K largest elements.",
             code: `int findKthLargest(int[] arr, int k) {
-    PriorityQueue<Integer> pq = new PriorityQueue<>(); // Min-Heap
+    // 1. Initialize a Min-Heap (Java's default PriorityQueue)
+    PriorityQueue<Integer> pq = new PriorityQueue<>(); 
+    
     for (int val : arr) {
-        pq.offer(val);
+        pq.offer(val); // 2. Add element to the heap
+        
+        // 3. If heap exceeds limit 'K', evict the SMALLEST element
+        // By throwing away the smallest, the heap only retains the 'K' largest elements seen so far
         if (pq.size() > k) {
-            pq.poll(); // remove the smallest
+            pq.poll(); 
         }
     }
-    return pq.peek(); // Kth largest is at the top
+    
+    // 4. The Kth Largest is now the smallest of the K remaining (lying at the top)
+    return pq.peek(); 
 }`,
             howToIdentify: "Finding Top K, Kth Largest/Smallest, or frequently merging lowest values.",
             killerProblems: "LC 215 (Kth Largest Element in an Array), LC 347 (Top K Frequent Elements)",
@@ -480,10 +571,12 @@ int memo(int index, int prev_index, int[] arr, int[][] dp) {
             code: `int[][] merge(int[][] intervals) {
     if (intervals.length <= 1) return intervals;
     
-    // Sort by start time
+    // 1. Sort all intervals strictly by their START time
     Arrays.sort(intervals, (a, b) -> Integer.compare(a[0], b[0]));
     
     List<int[]> res = new ArrayList<>();
+    
+    // 2. Take the first interval as a working reference
     int[] current = intervals[0];
     res.add(current);
     
@@ -491,10 +584,13 @@ int memo(int index, int prev_index, int[] arr, int[][] dp) {
         int currStart = current[0], currEnd = current[1];
         int nextStart = interval[0], nextEnd = interval[1];
         
+        // 3. Overlap Check: Does the next interval begin BEFORE the current one ends?
         if (nextStart <= currEnd) {
-            current[1] = Math.max(currEnd, nextEnd); // Merge
+            // Merge them: Expand the current end to enclose both chunks
+            current[1] = Math.max(currEnd, nextEnd); 
         } else {
-            current = interval; // Disjoint, push new
+            // Disjoint (No collision): Move the reference forward and add to result
+            current = interval; 
             res.add(current);
         }
     }
@@ -516,12 +612,18 @@ int memo(int index, int prev_index, int[] arr, int[][] dp) {
             code: `void cyclicSort(int[] arr) {
     int i = 0;
     while (i < arr.length) {
+        // 1. Array numbers are 1 to N, so the number 'x' belongs at index 'x - 1'
         int correctIndex = arr[i] - 1;
-        // Ignore out of bounds and duplicates
+        
+        // 2. Check Conditions:
+        // - Is the number > 0? (Ignore negatives/zeros depending on problem)
+        // - Is the number within array bounds?
+        // - Is the number NOT already at its correct index? (Avoid infinite swaps of duplicates)
         if (arr[i] > 0 && arr[i] <= arr.length && arr[i] != arr[correctIndex]) {
-            swap(arr, i, correctIndex);
+            swap(arr, i, correctIndex); // Send the number home
+            // Notice: We don't increment 'i' here because the swapped element at 'i' must now be checked!
         } else {
-            i++;
+            i++; // Current index is properly sorted or holds a duplicate/out-of-bound element
         }
     }
 }
@@ -544,19 +646,24 @@ void swap(int[] arr, int i, int j) {
             description: "Always pick the local optimal choice. Often requires sorting by end-times to maximize scheduled events.",
             code: `int eraseOverlapIntervals(int[][] intervals) {
     if (intervals.length == 0) return 0;
-    // Sort by END time
+    
+    // 1. Sort strictly by END time. Why? Finishing an event earlier leaves maximum free room for others!
     Arrays.sort(intervals, (a, b) -> Integer.compare(a[1], b[1]));
     
-    int count = 1;
-    int end = intervals[0][1];
+    int count = 1; // At least one event can be scheduled
+    int end = intervals[0][1]; // The end time of the very first scheduled event
     
     for (int i = 1; i < intervals.length; i++) {
+        // 2. If the next event starts exactly when or after the current one finishes
         if (intervals[i][0] >= end) {
-            count++;
-            end = intervals[i][1];
+            count++; // Schedule it
+            end = intervals[i][1]; // Update the free boundary to the new event's end time
         }
+        // 3. Otherwise, it overlaps. Due to our sorting, skipping it is purely optimal.
     }
-    return intervals.length - count; // Number of overlaps
+    
+    // Number of total overlaps = Total events - Non overlapping events scheduled
+    return intervals.length - count; 
 }`,
             howToIdentify: "Finding minimum changes needed, assigning cookies, or scheduling max events.",
             killerProblems: "LC 435 (Non-overlapping Intervals), LC 455 (Assign Cookies)",
@@ -572,15 +679,21 @@ void swap(int[] arr, int i, int j) {
             colorBorder: "rgba(192,132,252,0.2)",
             description: "Explore all possible states by choosing an item, recursing, and then removing the choice (backtracking).",
             code: `void backtrack(int start, int[] nums, List<Integer> current, List<List<Integer>> res) {
-    res.add(new ArrayList<>(current)); // capture current state
+    // 1. Capture the current valid state natively (Using 'new ArrayList' locks the snapshot in memory)
+    res.add(new ArrayList<>(current)); 
     
     for (int i = start; i < nums.length; i++) {
-        // Skip duplicates if array is sorted
+        // 2. Duplicate Check: If array is sorted, identical adjacent elements cause duplicate state trees
         if (i > start && nums[i] == nums[i-1]) continue;
         
-        current.add(nums[i]); // Choose
-        backtrack(i + 1, nums, current, res); // Explore
-        current.remove(current.size() - 1); // Un-choose
+        // 3. DO (Make the choice)
+        current.add(nums[i]); 
+        
+        // 4. RECURSE (Dive deeper assuming this choice)
+        backtrack(i + 1, nums, current, res); 
+        
+        // 5. UNDO (Backtrack: remove the element to explore alternative paths side-by-side)
+        current.remove(current.size() - 1); 
     }
 }`,
             howToIdentify: "Generating subsets, permutations, combinations, or placing N-Queens on a board.",
@@ -597,14 +710,21 @@ void swap(int[] arr, int i, int j) {
             colorBorder: "rgba(110,231,183,0.2)",
             description: "Count character frequencies using a fixed size array of 26 integers to quickly compare strings.",
             code: `boolean isAnagram(String s, String t) {
+    // 1. Quick length filter
     if (s.length() != t.length()) return false;
+    
+    // 2. Use a primitive frequency array over HashMap for O(1) space and super fast access
     int[] count = new int[26];
     
+    // 3. Mapping:
+    // +1 means String 's' has an extra occurrence of a character
+    // -1 means String 't' has an extra occurrence
     for (int i = 0; i < s.length(); i++) {
         count[s.charAt(i) - 'a']++;
         count[t.charAt(i) - 'a']--;
     }
     
+    // 4. If perfectly matched anagrams, every single relative offset will be 0
     for (int c : count) {
         if (c != 0) return false;
     }
@@ -624,12 +744,14 @@ void swap(int[] arr, int i, int j) {
             colorBorder: "rgba(74,222,128,0.2)",
             description: "Recursive traversal visiting nodes depth-first. Commonly used to check properties flowing up/down.",
             code: `int maxDepth(TreeNode root) {
-    if (root == null) return 0; // base case
+    // 1. Base Case: If the node is null, its depth contribution is 0
+    if (root == null) return 0; 
     
+    // 2. Hypothesis: Ask the left and right children for their max depth
     int leftDepth = maxDepth(root.left);
     int rightDepth = maxDepth(root.right);
     
-    // Process current node
+    // 3. Induction: The current node's depth is the deeper of its two subtrees PLUS 1 (itself)
     return Math.max(leftDepth, rightDepth) + 1;
 }`,
             howToIdentify: "Finding max path sums, heights, lowest common ancestors, or flattening a tree structure.",
@@ -647,20 +769,26 @@ void swap(int[] arr, int i, int j) {
     List<List<Integer>> res = new ArrayList<>();
     if (root == null) return res;
     
+    // 1. Initialize Queue for level tracking
     Queue<TreeNode> q = new LinkedList<>();
     q.offer(root);
     
     while (!q.isEmpty()) {
-        int levelSize = q.size(); // strict size of current level
-        List<Integer> level = new ArrayList<>();
+        // 2. Capture the strictly current level size
+        // This stops the loop from pulling in nodes from the *next* level too early
+        int levelSize = q.size(); 
+        
+        List<Integer> level = new ArrayList<>(); // Container for current level elements
         
         for (int i = 0; i < levelSize; i++) {
             TreeNode node = q.poll();
             level.add(node.val);
+            
+            // 3. Queue up the children for the NEXT level
             if (node.left != null) q.offer(node.left);
             if (node.right != null) q.offer(node.right);
         }
-        res.add(level);
+        res.add(level); // Lock in the level
     }
     return res;
 }`,
@@ -678,13 +806,20 @@ void swap(int[] arr, int i, int j) {
             colorBorder: "rgba(45,212,191,0.2)",
             description: "Pass a strict `min` and `max` bound down the tree. Inorder traversal yields a sorted sequence.",
             code: `boolean isValidBST(TreeNode root) {
+    // 1. Kick off the recursion with the widest possible bounds (Long to avoid Integer overflow)
     return isValid(root, Long.MIN_VALUE, Long.MAX_VALUE);
 }
 
 boolean isValid(TreeNode node, long min, long max) {
+    // 2. A null tree is technically a valid BST
     if (node == null) return true;
+    
+    // 3. Condition Violation: If the current node value falls outside our strictly established limits
     if (node.val <= min || node.val >= max) return false;
     
+    // 4. Recursive Check:
+    // - Left Child must be STRICTLY LESS than the current node limit
+    // - Right Child must be STRICTLY GREATER than the current node limit
     return isValid(node.left, min, node.val) && 
            isValid(node.right, node.val, max);
 }`,
@@ -702,31 +837,41 @@ boolean isValid(TreeNode node, long min, long max) {
             colorBorder: "rgba(167,139,250,0.2)",
             description: "Orders directed acyclic graphs linearly based on in-degrees of nodes recursively zeroed.",
             code: `int[] topoSort(int numCourses, int[][] prerequisites) {
+    // 1. Build Adjacency List and In-Degree Array
     List<List<Integer>> adj = new ArrayList<>();
     int[] inDegree = new int[numCourses];
     for (int i = 0; i < numCourses; i++) adj.add(new ArrayList<>());
     
+    // 2. Populate dependencies
+    // A prerequisite [courseA, courseB] means B must be taken BEFORE A (B -> A)
     for (int[] pre : prerequisites) {
-        adj.get(pre[1]).add(pre[0]);
-        inDegree[pre[0]]++;
+        adj.get(pre[1]).add(pre[0]); // Edge from B to A
+        inDegree[pre[0]]++;          // Node A gains an incoming edge dependency
     }
     
+    // 3. Find completely independent nodes (in-degree == 0) and push to queue
     Queue<Integer> q = new LinkedList<>();
     for (int i = 0; i < numCourses; i++) {
         if (inDegree[i] == 0) q.offer(i);
     }
     
+    // 4. Process queue linearly (Kahn's Algorithm)
     int[] order = new int[numCourses];
     int idx = 0;
     while (!q.isEmpty()) {
-        int curr = q.poll();
+        int curr = q.poll(); // Course is taken
         order[idx++] = curr;
+        
+        // As current course is taken, it frees up dependent courses (in-degree drops)
         for (int neighbor : adj.get(curr)) {
             inDegree[neighbor]--;
+            // If dependent course has no other prereqs blocking it, it's ready!
             if (inDegree[neighbor] == 0) q.offer(neighbor);
         }
     }
-    return idx == numCourses ? order : new int[0]; // check cycle
+    
+    // 5. Cycle Detection: If idx < numCourses, we encountered an impossible cycle
+    return idx == numCourses ? order : new int[0]; 
 }`,
             howToIdentify: "Problems mapping dependencies, schedules where Task A must complete before Task B (Course Schedule).",
             killerProblems: "LC 207 (Course Schedule), LC 210 (Course Schedule II)",
@@ -945,14 +1090,19 @@ void dfsSCC(int node, int[] vis, List<List<Integer>> adjRev) {
             description: "Navigating matrices using direction vectors avoiding out of bounds edges.",
             code: `void dfs(int[][] grid, int r, int c) {
     int rows = grid.length, cols = grid[0].length;
-    // Boundary checks & visited
+    
+    // 1. Boundary Checks & Visited Filter
+    // Out of bounds OR already visited/invalid path (e.g. 0 represents water/visited)
     if (r < 0 || c < 0 || r >= rows || c >= cols || grid[r][c] == 0) return;
     
-    grid[r][c] = 0; // Mark visited
+    // 2. Mark the cell as visited IMMIDEATELY to avoid infinite recursion loops
+    grid[r][c] = 0; 
     
+    // 3. Define the standard 4-way Directional Vectors (Up, Down, Left, Right)
     int[] dirR = {-1, 1, 0, 0};
     int[] dirC = {0, 0, -1, 1};
     
+    // 4. Fire off DFS recursively in all 4 valid directions
     for (int i = 0; i < 4; i++) {
         dfs(grid, r + dirR[i], c + dirC[i]);
     }
@@ -972,8 +1122,9 @@ void dfsSCC(int node, int[] vis, List<List<Integer>> adjRev) {
             description: "Using bits `(1 << i)` to represent states, sets, toggles, or utilizing XOR to cancel duplicates.",
             code: `int singleNumber(int[] nums) {
     int res = 0;
+    // 1. XOR Property: x ^ x = 0, and x ^ 0 = x
     for (int num : nums) {
-        res ^= num; // XOR cancels out matching pairs
+        res ^= num; // All matching pairs cancel out strictly into 0, leaving the singleton
     }
     return res;
 }
@@ -983,11 +1134,12 @@ List<List<Integer>> generateSubsets(int[] nums) {
     int n = nums.length;
     List<List<Integer>> res = new ArrayList<>();
     
-    // 1 << n equals 2^n
+    // 2. Use a bitmask where each subset state ranges from 0 to (2^n - 1)
     for (int mask = 0; mask < (1 << n); mask++) {
         List<Integer> subset = new ArrayList<>();
+        
+        // 3. For each mask, check its bits. If the i-th bit is a '1', include nums[i]
         for (int i = 0; i < n; i++) {
-            // Check if the i-th bit is set
             if ((mask & (1 << i)) != 0) {
                 subset.add(nums[i]);
             }
@@ -1011,7 +1163,7 @@ List<List<Integer>> generateSubsets(int[] nums) {
             description: "A tree where each node represents a character mapping to its subsequent character nodes.",
             code: `class TrieNode {
     TrieNode[] children = new TrieNode[26];
-    boolean isEnd = false;
+    boolean isEnd = false; // Marks valid word ending
 }
 
 class Trie {
@@ -1020,11 +1172,14 @@ class Trie {
     public void insert(String word) {
         TrieNode node = root;
         for (char c : word.toCharArray()) {
+            // 1. If child pathway does not exist, build it
             if (node.children[c - 'a'] == null) {
                 node.children[c - 'a'] = new TrieNode();
             }
+            // 2. Traverse down that pathway
             node = node.children[c - 'a'];
         }
+        // 3. Signal the successful completion of the inserted word
         node.isEnd = true;
     }
 
@@ -1032,8 +1187,10 @@ class Trie {
         TrieNode node = root;
         for (char c : word.toCharArray()) {
             node = node.children[c - 'a'];
+            // 4. If at any point the branch doesn't exist, the word doesn't exist
             if (node == null) return false;
         }
+        // 5. If it naturally terminated but isn't flagged as an end, it's just a prefix!
         return node.isEnd;
     }
 }`,
@@ -1055,25 +1212,30 @@ int n;
 
 void build(int[] arr, int node, int start, int end) {
     if (start == end) {
-        tree[node] = arr[start];
+        tree[node] = arr[start]; // 1. Leaf node maps strictly to single array element
     } else {
         int mid = (start + end) / 2;
-        build(arr, 2 * node, start, mid);
-        build(arr, 2 * node + 1, mid + 1, end);
+        // 2. Recursive Build Branches
+        build(arr, 2 * node, start, mid);         // Left Child
+        build(arr, 2 * node + 1, mid + 1, end);   // Right Child
+        
+        // 3. Post-Traversal Update: Parent equals sum of both children
         tree[node] = tree[2 * node] + tree[2 * node + 1];
     }
 }
 
 void update(int node, int start, int end, int idx, int val) {
     if (start == end) {
-        tree[node] = val;
+        tree[node] = val; // 4. Target leaf node is located and value replaced
     } else {
         int mid = (start + end) / 2;
+        // 5. Binary Search to accurately route the update down the correct side
         if (start <= idx && idx <= mid) {
             update(2 * node, start, mid, idx, val);
         } else {
             update(2 * node + 1, mid + 1, end, idx, val);
         }
+        // 6. Recalculate up the sequence explicitly post-update
         tree[node] = tree[2 * node] + tree[2 * node + 1];
     }
 }`,
