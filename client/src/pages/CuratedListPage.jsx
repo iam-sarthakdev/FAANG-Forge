@@ -16,6 +16,8 @@ import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-c';
 import 'prismjs/components/prism-cpp';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { markAsRevised } from '../services/api';
 import {
     DndContext,
@@ -169,9 +171,16 @@ const SortableSectionItem = React.memo(({ section, idx, isExpanded, toggleSectio
                                                             </div>
                                                             <span className="text-[10px] font-mono text-slate-600 uppercase">Java</span>
                                                         </div>
-                                                        <pre className="p-3 bg-transparent text-[11px] md:text-sm font-mono overflow-x-auto text-emerald-300 m-0">
-                                                            <code>{pattern.code}</code>
-                                                        </pre>
+                                                        <div className="max-h-[300px] overflow-auto custom-scrollbar bg-[#161618]">
+                                                            <SyntaxHighlighter
+                                                                language="java"
+                                                                style={vscDarkPlus}
+                                                                customStyle={{ margin: 0, padding: '12px', background: 'transparent', fontSize: '12px' }}
+                                                                wrapLines={true}
+                                                            >
+                                                                {pattern.code}
+                                                            </SyntaxHighlighter>
+                                                        </div>
                                                     </div>
 
                                                     {/* Strategy Notes */}

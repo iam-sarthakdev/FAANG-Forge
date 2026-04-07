@@ -731,6 +731,208 @@ boolean isValid(TreeNode node, long min, long max) {
             howToIdentify: "Problems mapping dependencies, schedules where Task A must complete before Task B (Course Schedule).",
             killerProblems: "LC 207 (Course Schedule), LC 210 (Course Schedule II)",
             commonMistakes: "Creating the adjacency list backwards (A -> B vs B -> A) breaking expected execution flows."
+        },
+        {
+            title: "Dijkstra's Algorithm (Shortest Path)",
+            emoji: "🛣️",
+            color: "#fb923c", // Orange-400
+            colorBg: "rgba(251,146,60,0.08)",
+            colorBorder: "rgba(251,146,60,0.2)",
+            description: "Finds the shortest paths from a source node to all other reachable nodes in a weighted graph without negative cycles.",
+            code: `// O(E log V) algorithm using a Min-Priority Queue
+int[] dijkstra(int V, List<List<int[]>> adj, int src) {
+    PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> Integer.compare(a[1], b[1]));
+    int[] dist = new int[V];
+    Arrays.fill(dist, Integer.MAX_VALUE);
+    
+    // Add source: [node, distance]
+    pq.offer(new int[]{src, 0});
+    dist[src] = 0;
+    
+    while (!pq.isEmpty()) {
+        int[] curr = pq.poll();
+        int u = curr[0];
+        int d = curr[1];
+        
+        // Skip stale pairs
+        if (d > dist[u]) continue;
+        
+        for (int[] edge : adj.get(u)) {
+            int v = edge[0]; // neighbor
+            int weight = edge[1];
+            
+            // Relaxation step
+            if (dist[u] + weight < dist[v]) {
+                dist[v] = dist[u] + weight;
+                pq.offer(new int[]{v, dist[v]});
+            }
+        }
+    }
+    return dist;
+}`,
+            howToIdentify: "Finding minimum time, distance, or cost moving through a graph with positive weighted edges.",
+            killerProblems: "LC 743 (Network Delay Time), LC 787 (Cheapest Flights Within K Stops)",
+            commonMistakes: "Applying this to graphs with negative weight cycles. Forgetting to skip stale nodes by omitting `if (d > dist[u]) continue;`."
+        },
+        {
+            title: "Floyd Warshall (All-Pairs Shortest Path)",
+            emoji: "🌐",
+            color: "#db2777", // Pink-600
+            colorBg: "rgba(219,39,119,0.08)",
+            colorBorder: "rgba(219,39,119,0.2)",
+            description: "Calculates the shortest paths between ALL pairs of nodes in a graph using DP.",
+            code: `// O(V^3) algorithm to find all-pairs shortest paths
+void floydWarshall(int[][] matrix) {
+    int V = matrix.length;
+    // Map unreachable vertices to a very high finite number (like 1e9)
+    for (int i = 0; i < V; i++) {
+        for (int j = 0; j < V; j++) {
+            if (matrix[i][j] == -1) matrix[i][j] = (int)(1e9); 
+            if (i == j) matrix[i][j] = 0;
+        }
+    }
+    
+    // Trying all intermediate nodes 'k'
+    for (int k = 0; k < V; k++) {
+        for (int i = 0; i < V; i++) {
+            for (int j = 0; j < V; j++) {
+                // If path via 'k' is strictly shorter, update it
+                matrix[i][j] = Math.min(matrix[i][j], 
+                               matrix[i][k] + matrix[k][j]);
+            }
+        }
+    }
+}`,
+            howToIdentify: "Queries requiring shortest cost between any two arbitrary nodes, or detecting negative cycles universally.",
+            killerProblems: "LC 1334 (Find the City With the Smallest Number of Neighbors at a Threshold Distance)",
+            commonMistakes: "Using `Integer.MAX_VALUE` directly, which overflows to negative values when `matrix[i][k] + matrix[k][j]` is computed. Use `1e9`."
+        },
+        {
+            title: "Breadth-First Search (BFS Graph)",
+            emoji: "🌊",
+            color: "#0ea5e9", // Sky-500
+            colorBg: "rgba(14,165,233,0.08)",
+            colorBorder: "rgba(14,165,233,0.2)",
+            description: "Explores all neighbor nodes at the present depth before moving deeper, providing the shortest path in unweighted graphs.",
+            code: `// O(V + E) level-order traversal using a Queue
+List<Integer> bfsGraph(int V, List<List<Integer>> adj) {
+    List<Integer> bfs = new ArrayList<>();
+    boolean[] vis = new boolean[V];
+    Queue<Integer> q = new LinkedList<>();
+    
+    // Starting from node 0 (assume 0-indexed connected graph)
+    q.offer(0);
+    vis[0] = true;
+    
+    while (!q.isEmpty()) {
+        int node = q.poll();
+        bfs.add(node);
+        
+        // Traverse all direct neighbors
+        for (int neighbor : adj.get(node)) {
+            if (!vis[neighbor]) {
+                vis[neighbor] = true; // Mark visited early to avoid pushing duplicates
+                q.offer(neighbor);
+            }
+        }
+    }
+    return bfs;
+}`,
+            howToIdentify: "Finding whether a path exists, searching broadly, or shortest paths where all edges equal weight 1.",
+            killerProblems: "LC 994 (Rotting Oranges), LC 1091 (Shortest Path in Binary Matrix)",
+            commonMistakes: "Marking elements visited when *popping* instead of when *pushing* to the queue. This inflates queue size."
+        },
+        {
+            title: "Depth-First Search (DFS Graph)",
+            emoji: "🧗",
+            color: "#65a30d", // Lime-600
+            colorBg: "rgba(101,163,13,0.08)",
+            colorBorder: "rgba(101,163,13,0.2)",
+            description: "Recursive search prioritizing deep dives along unique pathways until dead ends are hit.",
+            code: `// O(V + E) depth-first recursive traversal
+List<Integer> dfsGraph(int V, List<List<Integer>> adj) {
+    boolean[] vis = new boolean[V];
+    List<Integer> res = new ArrayList<>();
+    
+    // Handle disconnected components
+    for (int i = 0; i < V; i++) {
+        if (!vis[i]) {
+            dfs(i, vis, adj, res);
+        }
+    }
+    return res;
+}
+
+void dfs(int node, boolean[] vis, List<List<Integer>> adj, List<Integer> res) {
+    vis[node] = true; // mark current as visited
+    res.add(node);    // process the node
+    
+    // Go deep into each unvisited neighbor
+    for (int neighbor : adj.get(node)) {
+        if (!vis[neighbor]) {
+            dfs(neighbor, vis, adj, res);
+        }
+    }
+}`,
+            howToIdentify: "Finding connected components, checking bipartiteness, detecting cycles, exploring mazes/grids completely.",
+            killerProblems: "LC 547 (Number of Provinces), LC 802 (Find Eventual Safe States)",
+            commonMistakes: "Forgetting to wrap the DFS call in a `for` loop to cover disconnected graph components."
+        },
+        {
+            title: "Kosaraju's Algorithm (SCC)",
+            emoji: "🔄",
+            color: "#ef4444", // Red-500
+            colorBg: "rgba(239,68,68,0.08)",
+            colorBorder: "rgba(239,68,68,0.2)",
+            description: "Locates all Strongly Connected Components (SCCs) using two passes of DFS, flipping edges centrally.",
+            code: `// O(V + E) algorithm to find Strongly Connected Components
+int kosaraju(int V, List<List<Integer>> adj) {
+    int[] vis = new int[V];
+    Stack<Integer> st = new Stack<>();
+    
+    // Step 1: Sort nodes by finish time inside a stack
+    for (int i = 0; i < V; i++) {
+        if (vis[i] == 0) dfsSort(i, vis, adj, st);
+    }
+    
+    // Step 2: Reverse graph edges
+    List<List<Integer>> adjRev = new ArrayList<>();
+    for (int i = 0; i < V; i++) adjRev.add(new ArrayList<>());
+    
+    for (int i = 0; i < V; i++) {
+        vis[i] = 0; // reset visited array
+        for (int neighbor : adj.get(i)) {
+            // Reverse direction: i -> neighbor becomes neighbor -> i
+            adjRev.get(neighbor).add(i); 
+        }
+    }
+    
+    // Step 3: Second DFS pass according to finish time (pop from stack)
+    int sccCount = 0;
+    while (!st.isEmpty()) {
+        int node = st.pop();
+        if (vis[node] == 0) {
+            sccCount++;
+            dfsSCC(node, vis, adjRev);
+        }
+    }
+    return sccCount;
+}
+
+void dfsSort(int node, int[] vis, List<List<Integer>> adj, Stack<Integer> st) {
+    vis[node] = 1;
+    for (int n : adj.get(node)) if (vis[n] == 0) dfsSort(n, vis, adj, st);
+    st.push(node); // Push to stack when perfectly finished (leaves)
+}
+
+void dfsSCC(int node, int[] vis, List<List<Integer>> adjRev) {
+    vis[node] = 1;
+    for (int n : adjRev.get(node)) if (vis[n] == 0) dfsSCC(n, vis, adjRev);
+}
+`,
+            howToIdentify: "Finding node clusters where every node can reach every other node, shrinking big cyclic graphs.",
+            killerProblems: "Kosaraju's algorithm directly applied to find SSCs, related loosely to LC 1192 (Critical Connections in a Network / Bridges).",
+            commonMistakes: "Executing DFS on `adj` during Step 3 instead of `adjRev`. Not handling disconnected components at the initial sorting step."
         }
     ],
     "Matrix": [
