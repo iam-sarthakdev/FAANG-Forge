@@ -6,7 +6,7 @@ import {
     ExternalLink, Plus, Trophy, Layers, Trash2, Github, Globe, Sparkles,
     Lock, ArrowUp, ArrowDown, RefreshCw, ArrowUpDown, GripVertical,
     Code2, Tag, X, Save, Building2, Crown, Search, Star, Zap, Filter,
-    Database, Server, Cpu
+    Database, Server, Cpu, Network
 } from 'lucide-react';
 import Editor from 'react-simple-code-editor';
 import Prism from 'prismjs';
@@ -41,7 +41,7 @@ import { MASTERLISTS } from '../data/masterlistData';
 
 // --- Sortable Item Components ---
 
-const SortableSectionItem = ({ section, idx, isExpanded, toggleSection, openDeleteModal, isAdmin, children }) => {
+const SortableSectionItem = React.memo(({ section, idx, isExpanded, toggleSection, openDeleteModal, isAdmin, children }) => {
     const {
         attributes,
         listeners,
@@ -63,42 +63,47 @@ const SortableSectionItem = ({ section, idx, isExpanded, toggleSection, openDele
     const solvedCount = section.problems.filter(p => p.isCompleted).length;
     const totalRevisions = section.problems.reduce((acc, p) => acc + (p.revision_count || 0), 0);
     const completionPct = totalProblems > 0 ? Math.round((solvedCount / totalProblems) * 100) : 0;
+    const isPerfect = completionPct === 100;
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
             <div
-                className="group/section bg-[#111113] border border-white/[0.06] rounded-xl overflow-hidden hover:border-violet-500/20 transition-colors mb-3"
+                className={`group/section bg-[#111113] border ${isPerfect ? 'border-emerald-500/30' : 'border-white/[0.04] hover:border-violet-500/20'} rounded-xl overflow-hidden transition-colors mb-4 shadow-sm ${isPerfect ? 'shadow-emerald-500/5' : ''}`}
+                style={{ contentVisibility: 'auto' }}
             >
-                <div className="w-full p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1 cursor-pointer" onClick={() => toggleSection(section._id)}>
+                <div 
+                    className={`w-full p-4 flex items-center justify-between cursor-pointer ${isExpanded ? 'bg-white/[0.02]' : ''} transition-colors`}
+                    onClick={() => toggleSection(section._id)}
+                >
+                    <div className="flex items-center gap-4 flex-1">
                         {isAdmin && (
                             <div {...listeners} className="cursor-grab active:cursor-grabbing text-slate-600 hover:text-slate-400 p-1 -ml-1">
                                 <GripVertical size={18} />
                             </div>
                         )}
-                        <div className={`p-2.5 rounded-lg transition-colors ${isExpanded ? 'bg-violet-600 text-white' : 'bg-white/[0.04] text-slate-400 group-hover/section:text-white'}`}>
+                        <div className={`p-3 rounded-xl transition-all ${isPerfect ? 'bg-emerald-500/10 text-emerald-400' : isExpanded ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'bg-white/[0.03] text-slate-400 group-hover/section:text-white'}`}>
                             <Layers size={18} />
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-3">
-                                <h3 className={`text-base font-semibold transition-colors ${isExpanded ? 'text-white' : 'text-slate-300 group-hover/section:text-white'}`}>
+                                <h3 className={`text-base md:text-lg font-bold tracking-tight transition-colors ${isPerfect ? 'text-emerald-400' : isExpanded ? 'text-white' : 'text-slate-300 group-hover/section:text-white'}`}>
                                     {section.title}
                                 </h3>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wider ${isPerfect ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-white/[0.04] text-slate-400 border-white/[0.05]'}`}>
                                         {solvedCount}/{totalProblems} solved
                                     </span>
                                     {totalRevisions > 0 && (
-                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wider">
                                             {totalRevisions} revisions
                                         </span>
                                     )}
                                 </div>
                             </div>
                             {/* Mini progress bar */}
-                            <div className="mt-2 h-1 w-full max-w-[200px] bg-white/[0.04] rounded-full overflow-hidden">
+                            <div className="mt-2.5 h-1 w-full max-w-[240px] bg-white/[0.04] rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-violet-500 rounded-full transition-all duration-500"
+                                    className={`h-full rounded-full transition-all duration-700 ease-out ${isPerfect ? 'bg-emerald-500' : 'bg-violet-500'}`}
                                     style={{ width: `${completionPct}%` }}
                                 />
                             </div>
@@ -115,34 +120,31 @@ const SortableSectionItem = ({ section, idx, isExpanded, toggleSection, openDele
                             </button>
                         )}
                         <div
-                            onClick={() => toggleSection(section._id)}
-                            className={`p-1.5 rounded-md bg-white/[0.04] text-slate-400 transition-transform duration-200 cursor-pointer ${isExpanded ? 'rotate-180 text-white' : ''}`}
+                            className={`p-2 rounded-lg bg-white/[0.03] text-slate-400 transition-all duration-300 ${isExpanded ? 'rotate-180 text-white bg-white/[0.08]' : ''}`}
                         >
                             <ChevronDown size={18} />
                         </div>
                     </div>
                 </div>
 
-                <AnimatePresence>
-                    {isExpanded && (
-                        <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                        >
-                            <div className="p-2 pb-5 px-5 border-t border-white/[0.04] space-y-2">
-                                {children}
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                    <div className="overflow-hidden">
+                        <div className="p-2 pb-5 px-5 border-t border-white/[0.04] space-y-2">
+                            {children}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );
-};
+}, (prevProps, nextProps) => {
+    return prevProps.section === nextProps.section && 
+           prevProps.isExpanded === nextProps.isExpanded && 
+           prevProps.isAdmin === nextProps.isAdmin &&
+           prevProps.children === nextProps.children; 
+});
 
-const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleToggleCompletion, handleIncrementRevision, isAdmin, onOpenCompanyTags, onToggleCodeDrawer, codeDrawerOpen }) => {
+const SortableProblemItem = React.memo(({ problem, sectionId, idx, openDeleteModal, handleToggleCompletion, handleIncrementRevision, isAdmin, onOpenCompanyTags, onToggleCodeDrawer, codeDrawerOpen }) => {
     const {
         attributes,
         listeners,
@@ -161,14 +163,14 @@ const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleT
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
             <div
-                className={`group/problem relative flex items-center justify-between p-3.5 rounded-lg border transition-colors ${problem.isCompleted
-                    ? 'bg-emerald-500/[0.04] border-emerald-500/15'
-                    : 'bg-white/[0.01] border-white/[0.04] hover:bg-white/[0.03] hover:border-violet-500/15'
+                className={`group/problem relative flex items-center justify-between px-5 py-3 rounded-lg border transition-colors ${problem.isCompleted
+                    ? 'bg-emerald-500/[0.03] border-emerald-500/15'
+                    : 'bg-[#111113] border-white/[0.02] hover:bg-white/[0.02] hover:border-violet-500/20'
                     }`}
             >
                 <div className="flex items-center gap-4 min-w-0 flex-1">
                     {isAdmin && (
-                        <div {...listeners} className="cursor-grab active:cursor-grabbing text-slate-600 hover:text-slate-400 -ml-1 mr-1">
+                        <div {...listeners} className="cursor-grab active:cursor-grabbing text-slate-600 hover:text-slate-400 -ml-2 mr-0">
                             <GripVertical size={16} />
                         </div>
                     )}
@@ -178,65 +180,75 @@ const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleT
                         className={`flex-shrink-0 transition-transform active:scale-90 ${problem.isCompleted ? 'text-green-500' : 'text-slate-600 hover:text-slate-400'}`}
                     >
                         {problem.isCompleted
-                            ? <CheckCircle size={24} fill="currentColor" className="text-green-500 bg-black rounded-full" />
-                            : <Circle size={24} strokeWidth={1.5} />
+                            ? <CheckCircle size={22} fill="currentColor" className="text-green-500 bg-[#030014] rounded-full" />
+                            : <Circle size={22} strokeWidth={1.5} />
                         }
                     </button>
-                    <div className="min-w-0 flex-1">
+                    
+                    {/* Index Number */}
+                    <div className="hidden md:flex flex-shrink-0 w-6 justify-center">
+                        <span className="text-xs font-mono text-slate-500">{idx + 1}</span>
+                    </div>
+
+                    <div className="min-w-0 flex-1 flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
                         <a
                             href={problem.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`text-[15px] font-semibold truncate block hover:text-violet-400 transition-colors ${problem.isCompleted ? 'text-slate-500 line-through decoration-slate-700' : 'text-slate-200'}`}
+                            className={`text-sm md:text-[15px] font-medium truncate block transition-colors flex-1 ${problem.isCompleted ? 'text-slate-500 line-through decoration-slate-700 hover:text-slate-400' : 'text-slate-200 hover:text-violet-400'}`}
                         >
                             {problem.title}
                         </a>
-                        <div className="flex gap-2 mt-2 items-center flex-wrap">
-                            {/* Revision Count */}
-                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-medium">
-                                <RefreshCw size={12} />
-                                <span>{problem.revision_count || 0}</span>
-                                <button
-                                    onClick={(e) => handleIncrementRevision(sectionId, problem._id, e)}
-                                    className="ml-1 p-0.5 rounded hover:bg-orange-500/20 text-orange-400 transition-colors"
-                                >
-                                    <Plus size={10} strokeWidth={3} />
-                                </button>
-                            </div>
-
-                            <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-md border tracking-wider ${String(problem.difficulty) === 'Easy' ? 'bg-green-900/20 text-green-400 border-green-500/20' :
+                        
+                        <div className="flex flex-wrap items-center gap-2">
+                            {/* Difficulty */}
+                            <span className={`text-[10px] uppercase font-bold px-2 py-[3px] rounded border tracking-wider flex-shrink-0 ${String(problem.difficulty) === 'Easy' ? 'bg-green-900/20 text-green-400 border-green-500/20' :
                                 String(problem.difficulty) === 'Medium' ? 'bg-yellow-900/20 text-yellow-400 border-yellow-500/20' :
                                     String(problem.difficulty) === 'Hard' ? 'bg-red-900/20 text-red-400 border-red-500/20' :
                                         'bg-slate-800 text-slate-400 border-slate-700'
                                 }`}>
                                 {String(problem.difficulty || 'N/A')}
                             </span>
-                            <span className="text-[10px] font-medium px-2.5 py-1 rounded-md bg-slate-800/50 text-slate-400 border border-slate-700/50 flex items-center gap-1.5 hover:bg-slate-800 transition-colors">
-                                {String(problem.platform) === 'LeetCode' ? <Globe size={11} /> : <Github size={11} />}
+                            
+                            {/* Platform */}
+                            <span className="hidden sm:flex text-[10px] font-bold px-2 py-[3px] rounded bg-white/[0.03] text-slate-400 border border-white/[0.05] items-center gap-1.5 flex-shrink-0 uppercase tracking-widest">
+                                {String(problem.platform) === 'LeetCode' ? <Globe size={10} /> : <Github size={10} />}
                                 {String(problem.platform || '')}
                             </span>
+                            
+                            {/* Revision Count */}
+                            <div className="flex items-center gap-1.5 px-2 py-[3px] rounded border bg-orange-500/10 border-orange-500/20 text-orange-400 text-[10px] font-bold flex-shrink-0">
+                                <RefreshCw size={10} />
+                                <span>{problem.revision_count || 0}</span>
+                                <button
+                                    onClick={(e) => handleIncrementRevision(sectionId, problem._id, e)}
+                                    className="ml-0.5 p-0.5 rounded hover:bg-orange-500/20 text-orange-400 transition-colors"
+                                >
+                                    <Plus size={8} strokeWidth={4} />
+                                </button>
+                            </div>
 
                             {/* Company Tags */}
-                            {Array.isArray(problem.companyTags) && problem.companyTags.length > 0 && problem.companyTags.map((tag, i) => (
-                                <span key={i} className="text-[10px] font-medium px-2 py-1 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center gap-1">
-                                    <Building2 size={10} />
-                                    {String(tag)}
-                                </span>
-                            ))}
+                            <div className="hidden lg:flex items-center gap-1">
+                                {Array.isArray(problem.companyTags) && problem.companyTags.length > 0 && problem.companyTags.map((tag, i) => (
+                                    <span key={i} className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center">
+                                        {String(tag)}
+                                    </span>
+                                ))}
 
-                            {/* Add Company Tag (admin only) */}
-                            {isAdmin && (
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); onOpenCompanyTags(sectionId, problem._id, problem.companyTags || []); }}
-                                    className="text-[10px] font-medium px-2 py-1 rounded-md bg-white/[0.03] text-slate-500 border border-dashed border-white/10 hover:text-cyan-400 hover:border-cyan-500/30 hover:bg-cyan-500/5 transition-colors flex items-center gap-1"
-                                >
-                                    <Tag size={10} />
-                                    <Plus size={8} strokeWidth={3} />
-                                </button>
-                            )}
+                                {/* Add Company Tag (admin only) */}
+                                {isAdmin && (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); onOpenCompanyTags(sectionId, problem._id, problem.companyTags || []); }}
+                                        className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/[0.03] text-slate-500 border border-dashed border-white/10 hover:text-cyan-400 hover:border-cyan-500/30 hover:bg-cyan-500/5 transition-colors flex items-center"
+                                    >
+                                        <Plus size={8} strokeWidth={4} />
+                                    </button>
+                                )}
+                            </div>
 
                             {(problem.problemRef && typeof problem.problemRef === 'object' && problem.problemRef.revision_count > 0) && (
-                                <span className="text-[10px] font-medium px-2.5 py-1 rounded-md bg-blue-900/20 text-blue-400 border border-blue-500/20 flex items-center gap-1">
+                                <span className="text-[10px] font-medium px-2 py-[3px] rounded bg-blue-900/20 text-blue-400 border border-blue-500/20 flex items-center gap-1 flex-shrink-0">
                                     <RefreshCw size={10} />
                                     {Number(problem.problemRef.revision_count) || 0}
                                 </span>
@@ -244,41 +256,46 @@ const SortableProblemItem = ({ problem, sectionId, idx, openDeleteModal, handleT
                         </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 ml-4 pl-4 border-l border-white/[0.04]">
                     {/* Code toggle button - always visible */}
                     <button
                         onClick={(e) => { e.stopPropagation(); onToggleCodeDrawer(sectionId, problem._id); }}
                         className={`p-2 rounded-lg transition-colors ${codeDrawerOpen
                             ? 'text-violet-400 bg-violet-500/10 border border-violet-500/20'
-                            : problem.code ? 'text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20' : 'text-slate-500 bg-white/5 hover:text-white hover:bg-white/10'
+                            : problem.code ? 'text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20' : 'text-slate-500 hover:text-white hover:bg-white/[0.05]'
                             }`}
                         title={problem.code ? 'View/Edit Code' : 'Add Code'}
                     >
                         <Code2 size={16} />
                     </button>
-                    <div className="flex items-center gap-2 opacity-0 group-hover/problem:opacity-100 transition-opacity duration-200">
-                        <a
-                            href={problem.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 text-slate-500 hover:text-white bg-white/5 rounded-lg hover:bg-white/10 transition-colors"
+                    
+                    <a
+                        href={problem.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 text-slate-500 hover:text-violet-400 hover:bg-white/[0.05] rounded-lg transition-colors"
+                        title="Solve Problem"
+                    >
+                        <ExternalLink size={16} />
+                    </a>
+                    
+                    {isAdmin && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); openDeleteModal('problem', sectionId, problem._id); }}
+                            className="p-2 text-slate-500 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors opacity-0 group-hover/problem:opacity-100"
                         >
-                            <ExternalLink size={16} />
-                        </a>
-                        {isAdmin && (
-                            <button
-                                onClick={(e) => { e.stopPropagation(); openDeleteModal('problem', sectionId, problem._id); }}
-                                className="p-2 text-slate-500 hover:text-red-400 bg-white/5 rounded-lg hover:bg-red-500/10 transition-colors"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        )}
-                    </div>
+                            <Trash2 size={16} />
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
     );
-};
+}, (prevProps, nextProps) => {
+    return prevProps.problem === nextProps.problem && 
+           prevProps.codeDrawerOpen === nextProps.codeDrawerOpen &&
+           prevProps.isAdmin === nextProps.isAdmin;
+});
 
 
 const CuratedListsPage = () => {
@@ -425,10 +442,9 @@ const CuratedListsPage = () => {
         })
     );
 
-    // --- Handlers ---
-    const toggleSection = (id) => {
+    const toggleSection = useCallback((id) => {
         setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
-    };
+    }, []);
 
     const handleCreatePattern = async (e) => {
         e.preventDefault();
@@ -466,11 +482,11 @@ const CuratedListsPage = () => {
         }
     };
 
-    const openDeleteModal = (type, sectionId, problemId = null) => {
+    const openDeleteModal = useCallback((type, sectionId, problemId = null) => {
         setDeleteModal({ open: true, type, sectionId, problemId });
         setDeletePassword('');
         setVerifyError('');
-    };
+    }, []);
 
     const confirmDelete = async () => {
         if (deleteModal.type === 'section') {
@@ -498,62 +514,70 @@ const CuratedListsPage = () => {
         }
     };
 
-    const handleToggleCompletion = async (sectionId, problemId, e) => {
+    const handleToggleCompletion = useCallback(async (sectionId, problemId, e) => {
         e.stopPropagation();
-        // Optimistic update
-        const updatedList = { ...list };
-        updatedList.sections = updatedList.sections.map(s => {
-            if (s._id === sectionId) {
-                return {
-                    ...s,
-                    problems: s.problems.map(p => {
-                        if (p._id === problemId) return { ...p, isCompleted: !p.isCompleted };
-                        return p;
-                    })
-                };
-            }
-            return s;
+        
+        let problemStatusChangedTo = false;
+
+        setList(prev => {
+            const updatedList = { ...prev };
+            updatedList.sections = updatedList.sections.map(s => {
+                if (s._id === sectionId) {
+                    return {
+                        ...s,
+                        problems: s.problems.map(p => {
+                            if (p._id === problemId) {
+                                problemStatusChangedTo = !p.isCompleted;
+                                return { ...p, isCompleted: !p.isCompleted };
+                            }
+                            return p;
+                        })
+                    };
+                }
+                return s;
+            });
+            return updatedList;
         });
-        setList(updatedList);
 
         try {
             await listService.toggleProblemCompletion(currentListId, sectionId, problemId);
         } catch (err) {
             console.error(err);
-            // Revert on error (could fetch list again)
+            // On error we would technically revert the UI. For now, failure logs only.
         }
-    };
+    }, [currentListId]);
 
-    const handleIncrementRevision = async (sectionId, problemId, e) => {
+    const handleIncrementRevision = useCallback(async (sectionId, problemId, e) => {
         e.stopPropagation();
-        // Optimistic
-        const updatedList = { ...list };
-        updatedList.sections = updatedList.sections.map(s => {
-            if (s._id === sectionId) {
-                return {
-                    ...s,
-                    problems: s.problems.map(p => {
-                        if (p._id === problemId) return { ...p, revision_count: (p.revision_count || 0) + 1 };
-                        return p;
-                    })
-                };
-            }
-            return s;
+        setList(prev => {
+            const updatedList = { ...prev };
+            updatedList.sections = updatedList.sections.map(s => {
+                if (s._id === sectionId) {
+                    return {
+                        ...s,
+                        problems: s.problems.map(p => {
+                            if (p._id === problemId) return { ...p, revision_count: (p.revision_count || 0) + 1 };
+                            return p;
+                        })
+                    };
+                }
+                return s;
+            });
+            return updatedList;
         });
-        setList(updatedList);
 
         try {
             await listService.incrementRevision(currentListId, sectionId, problemId);
         } catch (err) {
             console.error(err);
         }
-    };
+    }, [currentListId]);
 
     // --- Company Tags Handlers ---
-    const onOpenCompanyTags = (sectionId, problemId, existingTags) => {
+    const onOpenCompanyTags = useCallback((sectionId, problemId, existingTags) => {
         setCompanyTagsModal({ open: true, sectionId, problemId, tags: [...(existingTags || [])] });
         setNewTagInput('');
-    };
+    }, []);
 
     const handleAddTag = () => {
         const tag = newTagInput.trim();
@@ -597,18 +621,25 @@ const CuratedListsPage = () => {
     };
 
     // --- Code Drawer Handlers ---
-    const onToggleCodeDrawer = (sectionId, problemId) => {
-        if (codeDrawer.sectionId === sectionId && codeDrawer.problemId === problemId) {
-            setCodeDrawer({ sectionId: null, problemId: null });
-            return;
-        }
-        // Find the problem data to load existing code
-        const section = list.sections.find(s => s._id === sectionId);
-        const problem = section?.problems.find(p => p._id === problemId);
-        setCodeInput(problem?.code || '');
-        setCodeLang(problem?.language || 'cpp');
-        setCodeDrawer({ sectionId, problemId });
-    };
+    const onToggleCodeDrawer = useCallback((sectionId, problemId) => {
+        setCodeDrawer(prev => {
+            if (prev.sectionId === sectionId && prev.problemId === problemId) {
+                return { sectionId: null, problemId: null };
+            }
+            return { sectionId, problemId };
+        });
+
+        // Set code input values based on the newly opened problem
+        setList(currentList => {
+            if (currentList && currentList.sections) {
+                const section = currentList.sections.find(s => s._id === sectionId);
+                const problem = section?.problems.find(p => p._id === problemId);
+                setCodeInput(problem?.code || '');
+                setCodeLang(problem?.language || 'cpp');
+            }
+            return currentList; 
+        });
+    }, []);
 
     const handleSaveCode = async () => {
         if (!currentListId || !codeDrawer.sectionId || !codeDrawer.problemId) return;
@@ -891,7 +922,8 @@ const CuratedListsPage = () => {
                             { name: 'SQL Master', desc: '10+ Patterns & Problems', icon: <Database className="text-cyan-400" size={24} />, route: '/sql-master', color: 'cyan', glow: 'bg-cyan-500' },
                             { name: 'System Design', desc: 'Complete Video Roadmap', icon: <Server className="text-blue-400" size={24} />, route: '/sd-roadmap', color: 'blue', glow: 'bg-blue-500' },
                             { name: 'DBMS Sheet', desc: 'Top Interview Topics', icon: <Database className="text-emerald-400" size={24} />, route: '/dbms-sheet', color: 'emerald', glow: 'bg-emerald-500' },
-                            { name: 'OS Sheet', desc: 'Core Operating Systems', icon: <Cpu className="text-purple-400" size={24} />, route: '/os-sheet', color: 'purple', glow: 'bg-purple-500' }
+                            { name: 'OS Sheet', desc: 'Core Operating Systems', icon: <Cpu className="text-purple-400" size={24} />, route: '/os-sheet', color: 'purple', glow: 'bg-purple-500' },
+                            { name: 'CN Sheet', desc: 'Computer Networks', icon: <Network className="text-amber-400" size={24} />, route: '/cn-sheet', color: 'amber', glow: 'bg-amber-500' }
                         ].map((card, idx) => (
                             <motion.div
                                 key={card.name}

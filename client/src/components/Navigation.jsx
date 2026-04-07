@@ -49,6 +49,7 @@ const Navigation = () => {
         { path: '/sd-roadmap', label: 'System Design', icon: Server },
         { path: '/dbms-sheet', label: 'DBMS Sheet', icon: Database },
         { path: '/os-sheet', label: 'OS Sheet', icon: Cpu },
+        { path: '/cn-sheet', label: 'CN Sheet', icon: Network },
         { path: '/behavioral', label: 'Behavioral', icon: Star },
         { path: '/companies', label: 'Companies', icon: Building2 },
     ];

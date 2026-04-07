@@ -27,6 +27,7 @@ import SQLMasterPage from './pages/SQLMasterPage';
 import SystemDesignRoadmapPage from './pages/SystemDesignRoadmapPage';
 import DBMSSheetPage from './pages/DBMSSheetPage';
 import OSSheetPage from './pages/OSSheetPage';
+import CNSheetPage from './pages/CNSheetPage';
 import PageLayout from './components/PageLayout';
 
 import './index.css';
@@ -213,6 +214,13 @@ function AppRoutes() {
                 <ProtectedRoute>
                     <PageLayout fullWidth>
                         <OSSheetPage />
+                    </PageLayout>
+                </ProtectedRoute>
+            } />
+            <Route path="/cn-sheet" element={
+                <ProtectedRoute>
+                    <PageLayout fullWidth>
+                        <CNSheetPage />
                     </PageLayout>
                 </ProtectedRoute>
             } />
