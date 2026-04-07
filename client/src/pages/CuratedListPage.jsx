@@ -6,7 +6,7 @@ import {
     ExternalLink, Plus, Trophy, Layers, Trash2, Github, Globe, Sparkles,
     Lock, ArrowUp, ArrowDown, RefreshCw, ArrowUpDown, GripVertical,
     Code2, Tag, X, Save, Building2, Crown, Search, Star, Zap, Filter,
-    Database, Server, Cpu, Network
+    Database, Server, Cpu, Network, Lightbulb, AlertTriangle
 } from 'lucide-react';
 import Editor from 'react-simple-code-editor';
 import Prism from 'prismjs';
@@ -38,6 +38,7 @@ import { CSS } from '@dnd-kit/utilities';
 import listService from '../services/listService';
 import { useAuth } from '../context/AuthContext';
 import { MASTERLISTS } from '../data/masterlistData';
+import { DSA_PATTERNS } from '../data/dsaPatternsData';
 
 // --- Sortable Item Components ---
 
@@ -50,6 +51,9 @@ const SortableSectionItem = React.memo(({ section, idx, isExpanded, toggleSectio
         transition,
         isDragging
     } = useSortable({ id: section._id, disabled: !isAdmin });
+
+    const [showPattern, setShowPattern] = useState(false);
+    const patternData = DSA_PATTERNS[section.title]; // Array of patterns for this section
 
     // Use transform to only apply drag translation without altering the base layout performance
     const style = {
@@ -129,6 +133,80 @@ const SortableSectionItem = React.memo(({ section, idx, isExpanded, toggleSectio
                 {/* Extremely fast pure CSS accordion, no framer-motion lag */}
                 <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] border-t border-white/[0.04]' : 'grid-rows-[0fr]'}`}>
                     <div className="overflow-hidden">
+                        {patternData && patternData.length > 0 && (
+                            <div className="px-5 py-3 bg-[#0a0a0c] border-b border-white/[0.03]">
+                                <button
+                                    onClick={() => setShowPattern(!showPattern)}
+                                    className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-emerald-400 transition-colors"
+                                >
+                                    <Code2 size={14} />
+                                    {showPattern ? 'Hide' : 'Show'} Pattern Skeletons
+                                </button>
+
+                                {showPattern && (
+                                    <div className="mt-4 space-y-5 pb-2">
+                                        {patternData.map((pattern, pIdx) => (
+                                            <div key={pIdx} className="bg-[#111113] border border-white/[0.06] rounded-xl overflow-hidden">
+                                                {/* Header */}
+                                                <div className="px-4 py-3 bg-white/[0.02] border-b border-white/[0.04] flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm border" style={{ background: pattern.colorBg, borderColor: pattern.colorBorder }}>
+                                                        {pattern.emoji}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-sm font-semibold text-white">{pattern.title}</h4>
+                                                        <p className="text-[11px] text-slate-400 mt-0.5">{pattern.description}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                                    {/* Code Block */}
+                                                    <div className="rounded-lg overflow-hidden border border-white/[0.06] bg-[#0a0a0c] lg:col-span-1">
+                                                        <div className="flex items-center justify-between px-3 py-2 bg-[#0e0e10] border-b border-white/[0.04]">
+                                                            <div className="flex gap-1.5">
+                                                                <div className="w-2 h-2 rounded-full bg-red-400/80" />
+                                                                <div className="w-2 h-2 rounded-full bg-yellow-400/80" />
+                                                                <div className="w-2 h-2 rounded-full bg-green-400/80" />
+                                                            </div>
+                                                            <span className="text-[10px] font-mono text-slate-600 uppercase">Java</span>
+                                                        </div>
+                                                        <pre className="p-3 bg-transparent text-[11px] md:text-sm font-mono overflow-x-auto text-emerald-300 m-0">
+                                                            <code>{pattern.code}</code>
+                                                        </pre>
+                                                    </div>
+
+                                                    {/* Strategy Notes */}
+                                                    <div className="space-y-3 lg:col-span-1 flex flex-col justify-start">
+                                                        <div className="p-3 bg-blue-500/[0.03] border border-blue-500/10 rounded-lg">
+                                                            <div className="flex items-center gap-2 mb-1.5 text-blue-400">
+                                                                <Search size={14} />
+                                                                <span className="text-xs font-bold uppercase tracking-wider">How to Identify</span>
+                                                            </div>
+                                                            <p className="text-xs text-blue-100/70 leading-relaxed">{pattern.howToIdentify}</p>
+                                                        </div>
+
+                                                        <div className="p-3 bg-amber-500/[0.03] border border-amber-500/10 rounded-lg">
+                                                            <div className="flex items-center gap-2 mb-1.5 text-amber-500">
+                                                                <Trophy size={14} />
+                                                                <span className="text-xs font-bold uppercase tracking-wider">Killer Problems</span>
+                                                            </div>
+                                                            <p className="text-xs text-amber-100/70 leading-relaxed">{pattern.killerProblems}</p>
+                                                        </div>
+
+                                                        <div className="p-3 bg-red-500/[0.03] border border-red-500/10 rounded-lg max-h-max">
+                                                            <div className="flex items-center gap-2 mb-1.5 text-red-500">
+                                                                <AlertTriangle size={14} />
+                                                                <span className="text-xs font-bold uppercase tracking-wider">Common Mistakes</span>
+                                                            </div>
+                                                            <p className="text-xs text-red-100/70 leading-relaxed">{pattern.commonMistakes}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                         <div className="py-2">
                             {children}
                         </div>
