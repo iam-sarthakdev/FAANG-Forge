@@ -51,11 +51,13 @@ const SortableSectionItem = React.memo(({ section, idx, isExpanded, toggleSectio
         isDragging
     } = useSortable({ id: section._id, disabled: !isAdmin });
 
+    // Use transform to only apply drag translation without altering the base layout performance
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
-        zIndex: isDragging ? 999 : 'auto'
+        zIndex: isDragging ? 99 : 'auto',
+        position: 'relative' // Fix z-index stacking during drag
     };
 
     // Section stats
@@ -68,48 +70,45 @@ const SortableSectionItem = React.memo(({ section, idx, isExpanded, toggleSectio
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
             <div
-                className={`group/section bg-[#111113] border ${isPerfect ? 'border-emerald-500/30' : 'border-white/[0.04] hover:border-violet-500/20'} rounded-xl overflow-hidden transition-colors mb-4 shadow-sm ${isPerfect ? 'shadow-emerald-500/5' : ''}`}
-                style={{ contentVisibility: 'auto' }}
+                className={`group/section bg-[#09090b] border ${isExpanded ? 'border-white/[0.08]' : 'border-white/[0.04]'} hover:border-white/[0.08] rounded-[14px] overflow-hidden transition-colors duration-300 mb-4`}
             >
                 <div 
-                    className={`w-full p-4 flex items-center justify-between cursor-pointer ${isExpanded ? 'bg-white/[0.02]' : ''} transition-colors`}
+                    className="w-full px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-white/[0.01] transition-colors"
                     onClick={() => toggleSection(section._id)}
                 >
                     <div className="flex items-center gap-4 flex-1">
                         {isAdmin && (
-                            <div {...listeners} className="cursor-grab active:cursor-grabbing text-slate-600 hover:text-slate-400 p-1 -ml-1">
-                                <GripVertical size={18} />
+                            <div {...listeners} className="cursor-grab active:cursor-grabbing text-slate-600 hover:text-slate-400 p-1 -ml-2 transition-colors">
+                                <GripVertical size={16} />
                             </div>
                         )}
-                        <div className={`p-3 rounded-xl transition-all ${isPerfect ? 'bg-emerald-500/10 text-emerald-400' : isExpanded ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'bg-white/[0.03] text-slate-400 group-hover/section:text-white'}`}>
-                            <Layers size={18} />
-                        </div>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 flex items-center flex-wrap gap-x-4 gap-y-2">
+                            <h3 className={`text-[15px] font-medium tracking-tight transition-colors ${isPerfect ? 'text-emerald-400' : isExpanded ? 'text-white' : 'text-slate-300 group-hover/section:text-white'} truncate`}>
+                                {section.title}
+                            </h3>
+                            
+                            {/* Progress info inline */}
                             <div className="flex items-center gap-3">
-                                <h3 className={`text-base md:text-lg font-bold tracking-tight transition-colors ${isPerfect ? 'text-emerald-400' : isExpanded ? 'text-white' : 'text-slate-300 group-hover/section:text-white'}`}>
-                                    {section.title}
-                                </h3>
-                                <div className="flex items-center gap-2">
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wider ${isPerfect ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-white/[0.04] text-slate-400 border-white/[0.05]'}`}>
-                                        {solvedCount}/{totalProblems} solved
+                                <span className={`text-[11px] font-medium tracking-wide ${isPerfect ? 'text-emerald-400/80' : 'text-slate-500'}`}>
+                                    {solvedCount} / {totalProblems} <span className="hidden sm:inline">completed</span>
+                                </span>
+                                {totalRevisions > 0 && (
+                                    <span className="text-[11px] font-medium bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded-full">
+                                        {totalRevisions} revs
                                     </span>
-                                    {totalRevisions > 0 && (
-                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wider">
-                                            {totalRevisions} revisions
-                                        </span>
-                                    )}
-                                </div>
+                                )}
                             </div>
-                            {/* Mini progress bar */}
-                            <div className="mt-2.5 h-1 w-full max-w-[240px] bg-white/[0.04] rounded-full overflow-hidden">
+                            
+                            {/* Seamless unified progress bar integrated into the flow */}
+                            <div className="w-full lg:max-w-[200px] h-1 bg-white/[0.04] rounded-full overflow-hidden mt-0.5 lg:ml-auto lg:mt-0 flex-shrink-0">
                                 <div
-                                    className={`h-full rounded-full transition-all duration-700 ease-out ${isPerfect ? 'bg-emerald-500' : 'bg-violet-500'}`}
+                                    className={`h-full rounded-full transition-all duration-700 ease-out ${isPerfect ? 'bg-emerald-500' : 'bg-slate-300'}`}
                                     style={{ width: `${completionPct}%` }}
                                 />
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 ml-4">
                         {isAdmin && (
                             <button
                                 onClick={(e) => { e.stopPropagation(); openDeleteModal('section', section._id); }}
@@ -120,16 +119,17 @@ const SortableSectionItem = React.memo(({ section, idx, isExpanded, toggleSectio
                             </button>
                         )}
                         <div
-                            className={`p-2 rounded-lg bg-white/[0.03] text-slate-400 transition-all duration-300 ${isExpanded ? 'rotate-180 text-white bg-white/[0.08]' : ''}`}
+                            className={`text-slate-500 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-white' : 'group-hover/section:text-slate-300'}`}
                         >
-                            <ChevronDown size={18} />
+                            <ChevronDown size={18} strokeWidth={1.5} />
                         </div>
                     </div>
                 </div>
 
-                <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                {/* Extremely fast pure CSS accordion, no framer-motion lag */}
+                <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] border-t border-white/[0.04]' : 'grid-rows-[0fr]'}`}>
                     <div className="overflow-hidden">
-                        <div className="p-2 pb-5 px-5 border-t border-white/[0.04] space-y-2">
+                        <div className="py-2">
                             {children}
                         </div>
                     </div>
@@ -157,134 +157,140 @@ const SortableProblemItem = React.memo(({ problem, sectionId, idx, openDeleteMod
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.5 : 1,
+        opacity: isDragging ? 0.4 : 1,
+        position: 'relative',
+        zIndex: isDragging ? 99 : 'auto'
     };
 
     return (
         <div ref={setNodeRef} style={style} {...attributes}>
             <div
-                className={`group/problem relative flex items-center justify-between px-5 py-3 rounded-lg border transition-colors ${problem.isCompleted
-                    ? 'bg-emerald-500/[0.03] border-emerald-500/15'
-                    : 'bg-[#111113] border-white/[0.02] hover:bg-white/[0.02] hover:border-violet-500/20'
+                className={`group/problem flex items-center justify-between px-5 py-2.5 transition-colors duration-200 border-b border-white/[0.02] last:border-b-0 ${problem.isCompleted
+                    ? 'opacity-60 bg-transparent'
+                    : 'bg-transparent hover:bg-white/[0.02]'
                     }`}
             >
                 <div className="flex items-center gap-4 min-w-0 flex-1">
                     {isAdmin && (
-                        <div {...listeners} className="cursor-grab active:cursor-grabbing text-slate-600 hover:text-slate-400 -ml-2 mr-0">
+                        <div {...listeners} className="cursor-grab active:cursor-grabbing text-slate-700 hover:text-slate-500 -ml-2 transition-colors">
                             <GripVertical size={16} />
                         </div>
                     )}
 
+                    {/* Minimalist Checkmark */}
                     <button
                         onClick={(e) => handleToggleCompletion(sectionId, problem._id, e)}
-                        className={`flex-shrink-0 transition-transform active:scale-90 ${problem.isCompleted ? 'text-green-500' : 'text-slate-600 hover:text-slate-400'}`}
+                        className={`flex-shrink-0 transition-transform hover:scale-110 active:scale-95 ${problem.isCompleted ? 'text-emerald-500' : 'text-slate-600 hover:text-slate-400'}`}
                     >
                         {problem.isCompleted
-                            ? <CheckCircle size={22} fill="currentColor" className="text-green-500 bg-[#030014] rounded-full" />
-                            : <Circle size={22} strokeWidth={1.5} />
+                            ? <CheckCircle size={20} />
+                            : <Circle size={20} strokeWidth={1.5} />
                         }
                     </button>
                     
-                    {/* Index Number */}
-                    <div className="hidden md:flex flex-shrink-0 w-6 justify-center">
-                        <span className="text-xs font-mono text-slate-500">{idx + 1}</span>
-                    </div>
-
-                    <div className="min-w-0 flex-1 flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
+                    <div className="min-w-0 flex-1 flex flex-col md:flex-row md:items-center gap-1.5 md:gap-4">
                         <a
                             href={problem.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`text-sm md:text-[15px] font-medium truncate block transition-colors flex-1 ${problem.isCompleted ? 'text-slate-500 line-through decoration-slate-700 hover:text-slate-400' : 'text-slate-200 hover:text-violet-400'}`}
+                            className={`text-[14px] truncate block transition-colors flex-1 ${problem.isCompleted ? 'text-slate-400 line-through decoration-slate-600' : 'text-slate-300 font-medium hover:text-white'}`}
                         >
                             {problem.title}
                         </a>
                         
                         <div className="flex flex-wrap items-center gap-2">
-                            {/* Difficulty */}
-                            <span className={`text-[10px] uppercase font-bold px-2 py-[3px] rounded border tracking-wider flex-shrink-0 ${String(problem.difficulty) === 'Easy' ? 'bg-green-900/20 text-green-400 border-green-500/20' :
-                                String(problem.difficulty) === 'Medium' ? 'bg-yellow-900/20 text-yellow-400 border-yellow-500/20' :
-                                    String(problem.difficulty) === 'Hard' ? 'bg-red-900/20 text-red-400 border-red-500/20' :
-                                        'bg-slate-800 text-slate-400 border-slate-700'
+                            {/* Aesthetic Soft Difficulty Pills */}
+                            <span className={`text-[11px] font-medium px-2.5 py-[2px] rounded-full tracking-wide flex-shrink-0 ${String(problem.difficulty) === 'Easy' ? 'bg-emerald-500/10 text-emerald-400' :
+                                String(problem.difficulty) === 'Medium' ? 'bg-amber-500/10 text-amber-500' :
+                                    String(problem.difficulty) === 'Hard' ? 'bg-rose-500/10 text-rose-400' :
+                                        'bg-white/5 text-slate-400'
                                 }`}>
                                 {String(problem.difficulty || 'N/A')}
                             </span>
                             
-                            {/* Platform */}
-                            <span className="hidden sm:flex text-[10px] font-bold px-2 py-[3px] rounded bg-white/[0.03] text-slate-400 border border-white/[0.05] items-center gap-1.5 flex-shrink-0 uppercase tracking-widest">
+                            {/* Platform Pill */}
+                            <span className="hidden sm:flex text-[11px] font-medium px-2 py-[2px] rounded-full bg-white/[0.03] text-slate-400 items-center gap-1.5 flex-shrink-0 border border-white/[0.04]">
                                 {String(problem.platform) === 'LeetCode' ? <Globe size={10} /> : <Github size={10} />}
                                 {String(problem.platform || '')}
                             </span>
                             
-                            {/* Revision Count */}
-                            <div className="flex items-center gap-1.5 px-2 py-[3px] rounded border bg-orange-500/10 border-orange-500/20 text-orange-400 text-[10px] font-bold flex-shrink-0">
-                                <RefreshCw size={10} />
-                                <span>{problem.revision_count || 0}</span>
-                                <button
-                                    onClick={(e) => handleIncrementRevision(sectionId, problem._id, e)}
-                                    className="ml-0.5 p-0.5 rounded hover:bg-orange-500/20 text-orange-400 transition-colors"
-                                >
-                                    <Plus size={8} strokeWidth={4} />
-                                </button>
-                            </div>
+                            {/* Revision Count pill */}
+                            {(problem.revision_count > 0 || problem.problemRef?.revision_count > 0) ? (
+                                <div className="flex items-center gap-1 px-2 py-[2px] rounded-full bg-indigo-500/10 text-indigo-400 text-[11px] font-medium flex-shrink-0">
+                                    <RefreshCw size={10} />
+                                    <span>{problem.revision_count || problem.problemRef?.revision_count || 0}</span>
+                                    {isAdmin && (
+                                        <button
+                                            onClick={(e) => handleIncrementRevision(sectionId, problem._id, e)}
+                                            className="ml-1 p-0.5 rounded-full hover:bg-indigo-500/20 text-indigo-400 transition-colors opacity-0 group-hover/problem:opacity-100"
+                                        >
+                                            <Plus size={10} strokeWidth={2.5} />
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                isAdmin && (
+                                    <button
+                                        onClick={(e) => handleIncrementRevision(sectionId, problem._id, e)}
+                                        className="text-[11px] font-medium px-1 py-0.5 rounded-full text-slate-600 hover:bg-white/[0.03] hover:text-indigo-400 transition-all opacity-0 group-hover/problem:opacity-100 flex items-center"
+                                        title="Mark as Revised"
+                                    >
+                                        <RefreshCw size={10} className="mr-1" />
+                                        <Plus size={8} strokeWidth={3} />
+                                    </button>
+                                )
+                            )}
 
-                            {/* Company Tags */}
-                            <div className="hidden lg:flex items-center gap-1">
+                            {/* Minimal Company Tags */}
+                            <div className="hidden lg:flex items-center gap-1.5">
                                 {Array.isArray(problem.companyTags) && problem.companyTags.length > 0 && problem.companyTags.map((tag, i) => (
-                                    <span key={i} className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center">
+                                    <span key={i} className="text-[10px] font-medium tracking-wide px-1.5 py-0.5 rounded bg-cyan-500/5 text-cyan-400 border border-cyan-500/10">
                                         {String(tag)}
                                     </span>
                                 ))}
 
-                                {/* Add Company Tag (admin only) */}
                                 {isAdmin && (
                                     <button
                                         onClick={(e) => { e.stopPropagation(); onOpenCompanyTags(sectionId, problem._id, problem.companyTags || []); }}
-                                        className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/[0.03] text-slate-500 border border-dashed border-white/10 hover:text-cyan-400 hover:border-cyan-500/30 hover:bg-cyan-500/5 transition-colors flex items-center"
+                                        className="text-[10px] px-1 py-0.5 rounded text-slate-600 hover:text-cyan-400 hover:bg-cyan-500/10 transition-colors opacity-0 group-hover/problem:opacity-100"
                                     >
-                                        <Plus size={8} strokeWidth={4} />
+                                        + Tag
                                     </button>
                                 )}
                             </div>
-
-                            {(problem.problemRef && typeof problem.problemRef === 'object' && problem.problemRef.revision_count > 0) && (
-                                <span className="text-[10px] font-medium px-2 py-[3px] rounded bg-blue-900/20 text-blue-400 border border-blue-500/20 flex items-center gap-1 flex-shrink-0">
-                                    <RefreshCw size={10} />
-                                    {Number(problem.problemRef.revision_count) || 0}
-                                </span>
-                            )}
                         </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-1 ml-4 pl-4 border-l border-white/[0.04]">
-                    {/* Code toggle button - always visible */}
+
+                {/* Hover Actions Block */}
+                <div className="flex items-center gap-1 ml-4 transition-opacity opacity-0 group-hover/problem:opacity-100">
                     <button
                         onClick={(e) => { e.stopPropagation(); onToggleCodeDrawer(sectionId, problem._id); }}
-                        className={`p-2 rounded-lg transition-colors ${codeDrawerOpen
-                            ? 'text-violet-400 bg-violet-500/10 border border-violet-500/20'
-                            : problem.code ? 'text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20' : 'text-slate-500 hover:text-white hover:bg-white/[0.05]'
+                        className={`p-1.5 rounded-md transition-colors ${codeDrawerOpen
+                            ? 'text-violet-400 bg-violet-500/10'
+                            : problem.code ? 'text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/15' : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.05]'
                             }`}
                         title={problem.code ? 'View/Edit Code' : 'Add Code'}
                     >
-                        <Code2 size={16} />
+                        <Code2 size={16} strokeWidth={1.5} />
                     </button>
                     
                     <a
                         href={problem.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 text-slate-500 hover:text-violet-400 hover:bg-white/[0.05] rounded-lg transition-colors"
+                        className="p-1.5 text-slate-500 hover:text-slate-300 hover:bg-white/[0.05] rounded-md transition-colors"
                         title="Solve Problem"
                     >
-                        <ExternalLink size={16} />
+                        <ExternalLink size={16} strokeWidth={1.5} />
                     </a>
                     
                     {isAdmin && (
                         <button
                             onClick={(e) => { e.stopPropagation(); openDeleteModal('problem', sectionId, problem._id); }}
-                            className="p-2 text-slate-500 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors opacity-0 group-hover/problem:opacity-100"
+                            className="p-1.5 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors ml-1"
                         >
-                            <Trash2 size={16} />
+                            <Trash2 size={16} strokeWidth={1.5} />
                         </button>
                     )}
                 </div>
@@ -840,57 +846,58 @@ const CuratedListsPage = () => {
     // --- DASHBOARD VIEW ---
     if (viewMode === 'dashboard') {
         return (
-            <div className="min-h-screen bg-[#030014] text-white p-6 md:p-12 font-sans selection:bg-fuchsia-500/30 overflow-hidden relative">
+            <div className="min-h-screen bg-black text-white p-6 md:p-12 font-sans selection:bg-fuchsia-500/30 overflow-hidden relative">
+                {/* Vercel inspired subtle ambient glow */}
                 <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute top-[-20%] left-[20%] w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-[120px]" />
-                    <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-fuchsia-600/10 rounded-full blur-[120px]" />
+                    <div className="absolute top-[-20%] left-[10%] w-[800px] h-[800px] bg-violet-600/5 rounded-full blur-[150px]" />
+                    <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-fuchsia-600/5 rounded-full blur-[150px]" />
                 </div>
 
                 <div className="max-w-7xl mx-auto relative z-10">
-                    <div className="text-center mb-12">
-                        <div className="inline-block">
-                            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+                    <div className="text-center mb-16 mt-8">
+                        <div className="inline-block relative">
+                            {/* Subtle top glare */}
+                            <div className="absolute -inset-x-6 -top-6 h-12 bg-gradient-to-r from-transparent via-white/10 to-transparent blur-xl pointer-events-none" />
+                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60 mb-6 tracking-tight">
                                 Curated Sheets
                             </h1>
-                            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                                Select a roadmap to start your mastery journey. From community favorites to custom lists.
+                            <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto font-medium">
+                                Select a roadmap to start your mastery journey. From community favorites to premium custom lists.
                             </p>
                         </div>
                     </div>
 
-                    <div className="mb-6 flex items-center gap-3">
-                        <Sparkles className="text-yellow-400" size={20} />
-                        <h2 className="text-2xl font-bold text-white tracking-tight">DSA Lists</h2>
+                    <div className="mb-6 flex items-center gap-3 px-2">
+                        <Sparkles className="text-yellow-500/80" size={20} />
+                        <h2 className="text-xl font-bold text-slate-200 tracking-tight">DSA Lists</h2>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
                         {allLists.map((l, idx) => (
                             <motion.div
                                 key={l._id}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: idx * 0.1 }}
+                                transition={{ delay: idx * 0.05 }}
                                 onClick={() => handleSelectList(l.name)}
-                                className="group relative bg-[#111113] border border-white/[0.06] hover:border-violet-500/20 rounded-xl p-7 cursor-pointer overflow-hidden transition-colors"
+                                className="group relative bg-[#09090b] border border-white/[0.04] hover:border-white/[0.12] rounded-2xl p-7 cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-[0_0_40px_-15px_rgba(139,92,246,0.1)]"
                             >
-
-
+                                {/* Linear-inspired top highlight line */}
+                                <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                
                                 <div className="relative z-10">
-                                    <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                                        {l.name.includes('NeetCode') ? <Sparkles className="text-yellow-400" size={28} /> :
-                                            l.name.includes('Striver') ? <Trophy className="text-orange-400" size={28} /> :
-                                                <Layers className="text-violet-400" size={28} />}
+                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-b from-white/10 to-transparent border border-white/10 flex items-center justify-center mb-6 shadow-Inner transform group-hover:-translate-y-1 transition-transform duration-300">
+                                        {l.name.includes('NeetCode') ? <Sparkles className="text-yellow-400" size={24} /> :
+                                            l.name.includes('Striver') ? <Trophy className="text-orange-400" size={24} /> :
+                                                <Layers className="text-violet-400" size={24} />}
                                     </div>
 
-                                    <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-violet-200 transition-colors">{l.name === "Sarthak's List" ? "Sarthak's Masterlist" : l.name}</h3>
-                                    <p className="text-slate-400 text-sm mb-6 line-clamp-2">{l.description || 'No description available.'}</p>
+                                    <h3 className="text-xl font-bold text-slate-100 mb-2 group-hover:text-white tracking-tight transition-colors">{l.name === "Sarthak's List" ? "Sarthak's Masterlist" : l.name}</h3>
+                                    <p className="text-slate-400 text-sm mb-8 line-clamp-2 leading-relaxed">{l.description || 'No description available.'}</p>
 
                                     <div className="flex items-center justify-between mt-auto">
-                                        <div className="text-xs font-semibold text-slate-500 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-                                            OPEN SHEET
-                                        </div>
-                                        <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-violet-600 group-hover:text-white transition-all">
-                                            <ArrowUp className="rotate-90" size={14} />
+                                        <div className="text-[11px] font-bold text-slate-500 group-hover:text-violet-300 tracking-wider transition-colors uppercase">
+                                            Open Sheet &rarr;
                                         </div>
                                     </div>
                                 </div>
@@ -901,29 +908,29 @@ const CuratedListsPage = () => {
                         {isAdmin && (
                             <motion.div
                                 onClick={handleSeedFamousLists}
-                                className="group relative bg-dashed border-2 border-white/10 hover:border-green-500/50 rounded-3xl p-8 cursor-pointer flex flex-col items-center justify-center text-center transition-all hover:bg-green-500/5 min-h-[300px]"
+                                className="group relative bg-transparent border border-dashed border-white/10 hover:border-white/20 rounded-2xl p-8 cursor-pointer flex flex-col items-center justify-center text-center transition-all hover:bg-white/[0.02]"
                             >
-                                <div className="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    {submitting ? <div className="animate-spin h-6 w-6 border-2 border-green-500 rounded-full border-t-transparent" /> : <RefreshCw className="text-green-500" size={24} />}
+                                <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    {submitting ? <div className="animate-spin h-5 w-5 border-2 border-white/50 rounded-full border-t-transparent" /> : <RefreshCw className="text-slate-400 group-hover:text-white" size={20} />}
                                 </div>
-                                <h3 className="text-lg font-bold text-slate-300 group-hover:text-green-400">Sync Sheets</h3>
-                                <p className="text-slate-500 text-xs mt-2">Missing something? Click to fetch NeetCode/Striver lists manually.</p>
+                                <h3 className="text-[15px] font-semibold text-slate-400 group-hover:text-slate-200">Sync Sheets</h3>
+                                <p className="text-slate-500 text-xs mt-2 max-w-[200px]">Missing standard lists? Click to fetch them manually.</p>
                             </motion.div>
                         )}
                     </div>
                     
-                    <div className="mb-6 flex items-center gap-3">
-                        <Trophy className="text-fuchsia-400" size={20} />
-                        <h2 className="text-2xl font-bold text-white tracking-tight">Interview Prep Sheets</h2>
+                    <div className="mb-6 flex items-center gap-3 px-2">
+                        <Trophy className="text-fuchsia-500/80" size={20} />
+                        <h2 className="text-xl font-bold text-slate-200 tracking-tight">Interview Prep Sheets</h2>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                         {[
-                            { name: 'SQL Master', desc: '10+ Patterns & Problems', icon: <Database className="text-cyan-400" size={24} />, route: '/sql-master', color: 'cyan', glow: 'bg-cyan-500' },
-                            { name: 'System Design', desc: 'Complete Video Roadmap', icon: <Server className="text-blue-400" size={24} />, route: '/sd-roadmap', color: 'blue', glow: 'bg-blue-500' },
-                            { name: 'DBMS Sheet', desc: 'Top Interview Topics', icon: <Database className="text-emerald-400" size={24} />, route: '/dbms-sheet', color: 'emerald', glow: 'bg-emerald-500' },
-                            { name: 'OS Sheet', desc: 'Core Operating Systems', icon: <Cpu className="text-purple-400" size={24} />, route: '/os-sheet', color: 'purple', glow: 'bg-purple-500' },
-                            { name: 'CN Sheet', desc: 'Computer Networks', icon: <Network className="text-amber-400" size={24} />, route: '/cn-sheet', color: 'amber', glow: 'bg-amber-500' }
+                            { name: 'SQL Master', desc: '10+ Patterns & Problems', icon: <Database className="text-cyan-400" size={24} />, route: '/sql-master', color: 'cyan', gradient: 'from-cyan-500/20 to-transparent' },
+                            { name: 'System Design', desc: 'Complete Video Roadmap', icon: <Server className="text-blue-400" size={24} />, route: '/sd-roadmap', color: 'blue', gradient: 'from-blue-500/20 to-transparent' },
+                            { name: 'DBMS Sheet', desc: 'Top Interview Topics', icon: <Database className="text-emerald-400" size={24} />, route: '/dbms-sheet', color: 'emerald', gradient: 'from-emerald-500/20 to-transparent' },
+                            { name: 'OS Sheet', desc: 'Core Operating Systems', icon: <Cpu className="text-purple-400" size={24} />, route: '/os-sheet', color: 'purple', gradient: 'from-purple-500/20 to-transparent' },
+                            { name: 'CN Sheet', desc: 'Computer Networks', icon: <Network className="text-amber-400" size={24} />, route: '/cn-sheet', color: 'amber', gradient: 'from-amber-500/20 to-transparent' }
                         ].map((card, idx) => (
                             <motion.div
                                 key={card.name}
@@ -931,24 +938,20 @@ const CuratedListsPage = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: (allLists.length + idx) * 0.05 }}
                                 onClick={() => navigate(card.route)}
-                                className={`group relative bg-[#111113] border border-white/[0.06] hover:border-${card.color}-500/20 rounded-xl p-6 cursor-pointer overflow-hidden transition-colors`}
+                                className="group relative bg-[#09090b] border border-white/[0.04] hover:border-white/[0.12] rounded-2xl p-6 cursor-pointer overflow-hidden transition-all duration-300"
                             >
-                                <div className={`absolute top-0 right-0 w-32 h-32 ${card.glow}/10 rounded-full blur-[50px] group-hover:${card.glow}/20 transition-colors opacity-0 group-hover:opacity-100`} />
+                                <div className={`absolute top-0 inset-x-0 h-[100px] bg-gradient-to-b ${card.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                                <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                                 
-                                <div className="relative z-10">
-                                    <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                                <div className="relative z-10 flex flex-col h-full">
+                                    <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-6 shadow-Inner transform group-hover:-translate-y-1 transition-transform duration-300">
                                         {card.icon}
                                     </div>
-                                    <h3 className={`text-xl font-bold text-white mb-2 group-hover:text-${card.color}-200 transition-colors`}>{card.name}</h3>
-                                    <p className="text-slate-400 text-sm mb-5">{card.desc}</p>
+                                    <h3 className="text-[17px] font-bold text-slate-100 mb-1 tracking-tight group-hover:text-white transition-colors">{card.name}</h3>
+                                    <p className="text-slate-500 text-sm mb-6 leading-relaxed flex-1">{card.desc}</p>
                                     
-                                    <div className="flex items-center justify-between mt-auto">
-                                        <div className="text-[10px] font-bold text-slate-500 bg-white/5 px-2.5 py-1 rounded-md border border-white/5 tracking-wider uppercase">
-                                            Start Prep
-                                        </div>
-                                        <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
-                                            <ArrowUp className="rotate-90 text-slate-400 group-hover:text-white" size={14} />
-                                        </div>
+                                    <div className="text-[11px] font-bold text-slate-500 group-hover:text-white tracking-wider transition-colors uppercase mt-auto">
+                                        Start Prep &rarr;
                                     </div>
                                 </div>
                             </motion.div>
@@ -970,81 +973,92 @@ const CuratedListsPage = () => {
 
 
     return (
-        <div className="min-h-screen bg-[#030014] text-white p-6 md:p-12 font-sans selection:bg-fuchsia-500/30 overflow-hidden relative">
+        <div className="min-h-screen bg-black text-white p-6 md:p-12 font-sans selection:bg-fuchsia-500/30 overflow-hidden relative">
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-[-20%] left-[20%] w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-[120px]" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-fuchsia-600/10 rounded-full blur-[120px]" />
+                <div className="absolute top-[-10%] left-[10%] w-[600px] h-[600px] bg-violet-600/5 rounded-full blur-[150px]" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-fuchsia-600/5 rounded-full blur-[150px]" />
             </div>
 
             <div className="max-w-6xl mx-auto relative z-10">
                 {/* Header with Back Button */}
-                <div className="mb-10 text-center relative">
+                <div className="mb-12 relative">
                     <button
                         onClick={handleBackToDashboard}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all flex items-center gap-2 group"
+                        className="py-2 px-3 -ml-3 mb-4 rounded-xl bg-transparent hover:bg-white/5 text-slate-400 hover:text-white transition-all flex items-center gap-2 group w-max"
                     >
-                        <ArrowUp className="-rotate-90 group-hover:-translate-x-1 transition-transform" size={18} />
-                        <span className="hidden sm:inline text-sm font-medium">All Sheets</span>
+                        <ArrowUp className="-rotate-90 group-hover:-translate-x-1 transition-transform" size={16} />
+                        <span className="text-[13px] font-medium tracking-wide">Back to Dashboard</span>
                     </button>
 
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 mb-6 backdrop-blur-md shadow-[0_0_15px_rgba(168,85,247,0.15)]">
-                        <Sparkles size={14} className="text-yellow-300" />
-                        <span className="text-xs font-semibold text-slate-200 tracking-widest uppercase">Official DSA Curriculum</span>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/[0.05] mb-4">
+                        <Sparkles size={12} className="text-violet-400" />
+                        <span className="text-[11px] font-bold text-slate-300 tracking-widest uppercase">Official Curriculum</span>
                     </div>
-                    <h1 className="text-3xl md:text-5xl font-bold text-white mb-2 tracking-tight">
+                    <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight">
                         {list.name === "Sarthak's List" ? "Sarthak's Masterlist" : list.name}
                     </h1>
                 </div>
 
-                {/* Progress Bar */}
-                <div className="bg-[#111113] border border-white/[0.06] p-6 rounded-xl mb-10">
-                    <div className="flex flex-col md:flex-row justify-between items-end mb-5">
+                {/* Progress Header Card */}
+                <div className="bg-[#09090b] border border-white/[0.04] p-8 rounded-3xl mb-12 relative overflow-hidden shadow-2xl shadow-violet-500/5">
+                    {/* Inner aesthetic elements */}
+                    <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                    <div className="absolute -top-32 -right-32 w-64 h-64 bg-violet-500/10 blur-[60px] rounded-full pointer-events-none" />
+
+                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-end mb-8">
                         <div>
-                            <div className="flex items-center gap-2 text-slate-300 mb-2">
-                                <Trophy className="text-amber-400" size={18} />
-                                <span className="font-semibold tracking-wide uppercase text-xs text-slate-400">Total Mastery</span>
+                            <div className="flex items-center gap-2 text-slate-400 mb-2">
+                                <Trophy className="text-violet-400" size={16} />
+                                <span className="font-bold tracking-widest uppercase text-[11px] text-slate-400">Total Mastery</span>
                             </div>
-                            <div className="text-4xl font-bold text-white tracking-tight flex items-baseline gap-2">
+                            <div className="text-4xl md:text-5xl font-bold text-white tracking-tight flex items-baseline gap-2">
                                 {solved}
-                                <span className="text-xl text-slate-600 font-medium">/ {total} Problems</span>
+                                <span className="text-xl md:text-2xl text-slate-600 font-medium tracking-normal">/ {total} <span className="hidden sm:inline">Problems</span></span>
                             </div>
                         </div>
-                        <div className="text-4xl font-bold text-violet-400">{progress}%</div>
+                        <div className="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-br from-violet-400 to-fuchsia-600 mt-4 md:mt-0 tracking-tighter">
+                            {progress}%
+                        </div>
                     </div>
-                    <div className="h-3 w-full bg-white/[0.04] rounded-full overflow-hidden mb-6">
-                        <div style={{ width: `${progress}%` }} className="h-full bg-violet-500 rounded-full transition-all duration-700" />
+                    
+                    {/* Main Progress Bar */}
+                    <div className="h-2 w-full bg-white/[0.03] rounded-full overflow-hidden mb-8 shadow-inner">
+                        <div style={{ width: `${progress}%` }} className="h-full bg-gradient-to-r from-violet-600 to-fuchsia-500 rounded-full transition-all duration-1000 ease-out relative">
+                            {/* Shiny progress tip */}
+                            <div className="absolute top-0 right-0 bottom-0 w-20 bg-gradient-to-r from-transparent to-white/30" />
+                        </div>
                     </div>
 
-                    {/* Difficulty Breakdown */}
-                    <div className="grid grid-cols-3 gap-4">
+                    {/* Difficulty Breakdown (Linear-esque tags) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {/* Easy */}
-                        <div className="bg-green-500/[0.06] border border-green-500/15 rounded-xl p-4">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-bold uppercase tracking-wider text-green-400">Easy</span>
-                                <span className="text-sm font-bold text-green-400">{diffStats.Easy.solved}/{diffStats.Easy.total}</span>
+                        <div className="bg-transparent border border-white/[0.04] rounded-2xl p-5 hover:bg-white/[0.01] transition-colors">
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">Easy</span>
+                                <span className="text-[13px] font-bold text-slate-300">{diffStats.Easy.solved} <span className="text-slate-600">/ {diffStats.Easy.total}</span></span>
                             </div>
-                            <div className="h-1.5 w-full bg-green-900/30 rounded-full overflow-hidden">
-                                <div style={{ width: diffStats.Easy.total > 0 ? `${(diffStats.Easy.solved / diffStats.Easy.total) * 100}%` : '0%' }} className="h-full bg-green-500 rounded-full transition-all duration-500" />
+                            <div className="h-1 w-full bg-white/[0.03] rounded-full overflow-hidden">
+                                <div style={{ width: diffStats.Easy.total > 0 ? `${(diffStats.Easy.solved / diffStats.Easy.total) * 100}%` : '0%' }} className="h-full bg-emerald-500 rounded-full transition-all duration-700" />
                             </div>
                         </div>
                         {/* Medium */}
-                        <div className="bg-yellow-500/[0.06] border border-yellow-500/15 rounded-xl p-4">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-bold uppercase tracking-wider text-yellow-400">Medium</span>
-                                <span className="text-sm font-bold text-yellow-400">{diffStats.Medium.solved}/{diffStats.Medium.total}</span>
+                        <div className="bg-transparent border border-white/[0.04] rounded-2xl p-5 hover:bg-white/[0.01] transition-colors">
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full">Medium</span>
+                                <span className="text-[13px] font-bold text-slate-300">{diffStats.Medium.solved} <span className="text-slate-600">/ {diffStats.Medium.total}</span></span>
                             </div>
-                            <div className="h-1.5 w-full bg-yellow-900/30 rounded-full overflow-hidden">
-                                <div style={{ width: diffStats.Medium.total > 0 ? `${(diffStats.Medium.solved / diffStats.Medium.total) * 100}%` : '0%' }} className="h-full bg-yellow-500 rounded-full transition-all duration-500" />
+                            <div className="h-1 w-full bg-white/[0.03] rounded-full overflow-hidden">
+                                <div style={{ width: diffStats.Medium.total > 0 ? `${(diffStats.Medium.solved / diffStats.Medium.total) * 100}%` : '0%' }} className="h-full bg-amber-500 rounded-full transition-all duration-700" />
                             </div>
                         </div>
                         {/* Hard */}
-                        <div className="bg-red-500/[0.06] border border-red-500/15 rounded-xl p-4">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-bold uppercase tracking-wider text-red-400">Hard</span>
-                                <span className="text-sm font-bold text-red-400">{diffStats.Hard.solved}/{diffStats.Hard.total}</span>
+                        <div className="bg-transparent border border-white/[0.04] rounded-2xl p-5 hover:bg-white/[0.01] transition-colors">
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full">Hard</span>
+                                <span className="text-[13px] font-bold text-slate-300">{diffStats.Hard.solved} <span className="text-slate-600">/ {diffStats.Hard.total}</span></span>
                             </div>
-                            <div className="h-1.5 w-full bg-red-900/30 rounded-full overflow-hidden">
-                                <div style={{ width: diffStats.Hard.total > 0 ? `${(diffStats.Hard.solved / diffStats.Hard.total) * 100}%` : '0%' }} className="h-full bg-red-500 rounded-full transition-all duration-500" />
+                            <div className="h-1 w-full bg-white/[0.03] rounded-full overflow-hidden">
+                                <div style={{ width: diffStats.Hard.total > 0 ? `${(diffStats.Hard.solved / diffStats.Hard.total) * 100}%` : '0%' }} className="h-full bg-rose-500 rounded-full transition-all duration-700" />
                             </div>
                         </div>
                     </div>
