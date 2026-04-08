@@ -9,7 +9,8 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json'
     },
-    withCredentials: true
+    withCredentials: true,
+    timeout: 120000 // 2 minutes to handle render sleep
 });
 
 // Add token to requests
@@ -26,16 +27,36 @@ api.interceptors.request.use(
     }
 );
 
-// Handle auth errors
+// Handle responses and auto-retries
 api.interceptors.response.use(
     (response) => response,
-    (error) => {
+    async (error) => {
+        const config = error.config;
+
         if (error.response?.status === 401) {
             // Token expired or invalid
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/login';
+            return Promise.reject(error);
         }
+
+        // Auto-retry logic for 5xx errors or network failures (Render cold starts)
+        const isRetryableError = !error.response || error.response.status >= 500;
+        
+        if (isRetryableError) {
+            if (!config._retryCount) {
+                config._retryCount = 0;
+            }
+
+            if (config._retryCount < 3) {
+                config._retryCount += 1;
+                console.warn(`Retrying API request (${config._retryCount}/3): ${config.url}`);
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                return api(config);
+            }
+        }
+
         return Promise.reject(error);
     }
 );

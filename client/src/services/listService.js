@@ -3,10 +3,10 @@ import axios from 'axios';
 const baseUrl = import.meta.env.VITE_API_URL || 'https://algoflow-api.onrender.com';
 const API_URL = baseUrl.endsWith('/api') ? baseUrl : `${baseUrl}/api`;
 
-// Default timeout for API calls (15 seconds)
-const DEFAULT_TIMEOUT = 15000;
-// Longer timeout for seed/heavy operations (30 seconds)
-const LONG_TIMEOUT = 30000;
+// Default timeout for API calls (120 seconds for cold starts)
+const DEFAULT_TIMEOUT = 120000;
+// Longer timeout for seed/heavy operations (150 seconds)
+const LONG_TIMEOUT = 150000;
 
 const getAuthHeaders = () => ({
     Authorization: `Bearer ${localStorage.getItem('token')}`
