@@ -1240,7 +1240,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Sarthak Dev**
 - GitHub: [@iam-sarthakdev](https://github.com/iam-sarthakdev)
 - Email: sarthak1712005@gmail.com
-- LinkedIn: [Sarthak Dev](https://linkedin.com/in/sarthakdev)
+- LinkedIn: [Sarthak Dev](https://linkedin.com/in/sarthak-kanoi)
 
 ---
 
